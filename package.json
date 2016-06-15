@@ -1,0 +1,24 @@
+{
+  "name": "starcounter-layout-html-editor",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Custom Element with Ace editor to change Starcounter's layouts",
+  "main": "starcounter-layout-html-editor.html",
+  "dependencies": {},
+  "devDependencies": {
+    "grunt": "^0.4.5",
+    "grunt-bump": "^0.3.0",
+    "web-component-tester": "^4.2.1"
+  },
+  "scripts": {
+    "test": "wct"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Starcounter/starcounter-layout-html-editor"
+  },
+  "bugs": {
+    "url": "https://github.com/Starcounter/starcounter-layout-html-editor/issues"
+  },
+  "license": "MIT"
+}
