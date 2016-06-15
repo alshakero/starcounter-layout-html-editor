@@ -1,10 +1,6 @@
 # &lt;starcounter-layout-html-editor&gt; [![Build Status](https://travis-ci.org/Starcounter/starcounter-layout-html-editor.svg?branch=gh-pages)](https://travis-ci.org/Starcounter/starcounter-layout-html-editor)
 
-> A bare minimum custom element starter-kit using [Polymer](http://www.polymer-project.org/).
->
-> Like [Yeoman](http://yeoman.io/)? Use the [generator-element](https://www.npmjs.org/package/generator-element) instead.
->
-> Looking for a working example? Check [hello-world-polymer](https://github.com/webcomponents/hello-world-polymer).
+> Custom Element with Ace editor to change Starcounter's layouts
 
 ## Demo
 
@@ -44,19 +40,16 @@ Or [download as ZIP](https://github.com/Starcounter/starcounter-layout-html-edit
 
 Attribute     | Options     | Default      | Description
 ---           | ---         | ---          | ---
-`foo`         | *string*    | `bar`        | Lorem ipsum dolor.
 
 ## Methods
 
 Method        | Parameters   | Returns     | Description
 ---           | ---          | ---         | ---
-`unicorn()`   | None.        | Nothing.    | Magic stuff appears.
 
 ## Events
 
 Event         | Description
 ---           | ---
-`onsomething` | Triggers when something happens.
 
 ## [Contributing and Development](CONTRIBUTING.md)
 
