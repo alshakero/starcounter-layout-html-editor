@@ -54,8 +54,8 @@ version: 0.0.0
                 value="{{content::change}}"></juicy-ace-editor>
         </div>
         <div id="buttons">
-            <button on-click="restore" disabled$="{{disabled}}">Restore</button>
-            <button on-click="apply" disabled$="{{disabled}}">Apply</button>
+            <button on-click="revert" disabled$="{{disabled}}">Revert</button>
+            <button on-click="restore" disabled$="{{disabled}}">Restore default</button>
             <button on-click="save" disabled$="{{disabled}}">Save</button>
         </div>
         <p>
@@ -91,7 +91,7 @@ version: 0.0.0
                 }
             },
 
-            _selectorChanged: function(newVal, oldVal) {
+            _selectorChanged: function (newVal, oldVal) {
                 this.partial = selectElementByString(newVal);
                 if (this.partial){
                     this.content = this.partial.compositionElement.shadowRoot && this.partial.compositionElement.shadowRoot.innerHTML || '';
@@ -101,25 +101,46 @@ version: 0.0.0
                     this.set('disabled', true);
                 }
             },
-            _contentChanged: function(newVal, oldVal) {
+            _contentChanged: function (newVal, oldVal) {
                 if (this.partial && this.partial.compositionElement && this.disabled === false) {
                     this.partial.compositionElement.composition = this.partial.stringToDocumentFragment(newVal);
                 }
             },
             // Fires when an instance of the element is created
-            created: function() {},
+            created: function () {},
 
             // Fires when the local DOM has been fully prepared
-            ready: function() {},
+            ready: function () {},
 
             // Fires when the element was inserted into the document
-            attached: function() {},
+            attached: function () {},
 
             // Fires when the element was removed from the document
-            detached: function() {},
+            detached: function () {},
 
             // Fires when an attribute was added, removed, or updated
-            attributeChanged: function(name, type) {}
+            attributeChanged: function (name, type) {},
+
+
+            /**
+             * Saves given or current layout as stored one, (TODO:) notifies binding about it.
+             * @param  {String} [layoutStr] layout to be saved, if not given current one will be used
+             */
+            save: function () {
+                // TODO: move saving from sc-include to here
+                return this.partial && this.partial.saveLayout();
+            },
+            restore: function () {
+                // TODO:
+                console.warn('Default layouts are not yet implemented!');
+            },
+            revert: function () {
+                if (!this.partial) {
+                    return false;
+                }
+                return this.set('content', this.partial.storedLayout);
+
+            }
         });
 
         function selectElementByString(selector) {
