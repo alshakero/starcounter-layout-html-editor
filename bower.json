@@ -22,7 +22,9 @@
   "dependencies": {
     "webcomponentsjs": "^0.7.2",
     "polymer": "^1.5.0",
-    "juicy-ace-editor": "^1.1.1"
+    "juicy-ace-editor": "^1.1.1",
+    "juicy-dom-tree-view": "juicy/juicy-dom-tree-view#gh-pages",
+    "juicy-highlight": "Juicy/juicy-highlight#gh-pages"
   },
   "devDependencies": {
     "web-component-tester": "^4.2.1",

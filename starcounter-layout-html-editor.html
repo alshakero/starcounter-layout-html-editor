@@ -7,6 +7,8 @@ version: 0.0.0
 <!-- Imports Polymer -->
 <link rel="import" href="../polymer/polymer.html">
 <link rel="import" href="../juicy-ace-editor/juicy-ace-editor.html">
+<link rel="import" href="../juicy-dom-tree-view/juicy-dom-tree-view.html">
+<link rel="import" href="../juicy-highlight/src/juicy-highlight.html" />
 
 <!-- Defines element markup -->
 <dom-module id="starcounter-layout-html-editor">
@@ -36,6 +38,20 @@ version: 0.0.0
             #editor-area{
                 height: 5em;
                 flex: 1 0 5em;
+                display: flex;
+            }
+            #editor-area > *{
+                flex: 1 0 5em;
+
+                box-shadow: 0 0  5px grey;
+                margin: 5px;
+                overflow:auto;
+            }
+            #editor-area >[disabled]{
+                opacity: 0.35;
+            }
+            juicy-dom-tree-view{
+                --juicy-dom-tree-selected-background-color: rgba(30, 144, 255, 0.5);
             }
         </style>
         <label class="partial-picker">
@@ -44,15 +60,29 @@ version: 0.0.0
                 placeholder="css selector for partial to edit"
                 value="{{selector::input}}"/>
         </label>
+        <juicy-highlight id="highlightScopeSelected" strokewidth="1" strokecolor="#C0C0C0" strokeoffset="2" overlay></juicy-highlight>
         <!-- <code>{{selector}}</code> -->
         <div id="editor-area">
-            <juicy-ace-editor
-                id="editor"
-                style="height: 100%;"
-                mode="ace/mode/html"
-                readonly$="{{disabled}}"
-                value="{{content::change}}"
-                wrapmode="true"></juicy-ace-editor>
+            <div>
+                <juicy-ace-editor
+                    id="editor"
+                    style="height: 100%;"
+                    mode="ace/mode/html"
+                    readonly$="{{disabled}}"
+                    value="{{content}}"
+                    on-change="aceChanged"
+                    wrapmode="true"></juicy-ace-editor>
+            </div>
+            <div>
+                <!-- <juicy-highlight id="highlightTileRollover" strokewidth="1" strokecolor="#1E90FF" strokeoffset="2" fill="rgba(0, 191, 255, 0.2)"></juicy-highlight> -->
+                <juicy-highlight id="highlightElementSelected" strokewidth="2" strokecolor="#1E90FF" strokeoffset="2"></juicy-highlight>
+                <juicy-dom-tree-view
+                    id="tree"
+                    disabled$="{{disabled}}"
+                    doc="{{partial.compositionElement.composition::change}}"
+                    on-selected-element-changed="selectedElementChanged"
+                    ></juicy-dom-tree-view>
+            </div>
         </div>
         <div id="buttons">
             <button on-click="revert" disabled$="{{disabled}}">Revert</button>
@@ -71,12 +101,6 @@ version: 0.0.0
         Polymer({
             is: 'starcounter-layout-html-editor',
 
-            /**
-             * Reference to the partial (<starcounter-include>), that will be edited.
-             * @type {HTMLElement}
-             */
-            partial: null,
-
             properties: {
                 selector: {
                     type: String,
@@ -86,27 +110,78 @@ version: 0.0.0
                     type: Boolean,
                     value: true
                 },
-                content: {
-                    type: String,
-                    observer: '_contentChanged',
-                    value: ''
+                composition: {
+                    type: Object,
+                    observer: '_compositionChanged'
+                },
+                /**
+                * Reference to the partial (<starcounter-include>), that will be edited.
+                * @type {HTMLElement}
+                */
+                partial:{
+                    type: Object
                 }
             },
 
+//todo move it to another custom element
+selectedElementChanged: function (event) {
+    var element = event.detail.value;
+    switch (element.tagName){
+        case 'CONTENT':
+            element = element.getDistributedNodes();
+            break;
+        case 'SLOT':
+            element = element.assignedNodes();
+            break;
+    }
+    this.$.highlightElementSelected.show(element);
+},
+
+            observers: [
+                'compositionHTMLChanged(partial.compositionElement.shadowRoot.innerHTML)'
+            ],
+            // Each method referenced in observers must be defined in
+            // element prototype. The argument to the method is the new value
+            // of the sub-property.
+            compositionHTMLChanged: function(html) {
+                console.log('partial..innerHTML changed' + html);
+                this._compositionIsBeingSet = true;
+                this.content = html || '';
+                this._compositionIsBeingSet = false;
+            },
+            _compositionIsBeingSet: false,
             _selectorChanged: function (newVal, oldVal) {
                 this.partial = selectElementByString(newVal);
                 if (this.partial){
-                    this.content = this.partial.compositionElement.shadowRoot && this.partial.compositionElement.shadowRoot.innerHTML || '';
                     this.set('disabled', false);
+                    this.$.highlightScopeSelected.show([this.parentElement, this.partial]);
+                    this.composition = this.partial.compositionElement.shadowRoot || document.createDocumentFragment();
                 } else {
-                    this.content = '';
                     this.set('disabled', true);
+                    this.$.highlightScopeSelected.hide();
+                    this.composition = null;
                 }
             },
-            _contentChanged: function (newVal, oldVal) {
-                if (this.partial && this.partial.compositionElement && this.disabled === false) {
-                    this.partial.compositionElement.composition = this.partial.stringToDocumentFragment(newVal);
+            aceChanged: function(event, oldVal){
+                // Prevent looping by Polymer's notification protocol
+                if (this._compositionIsBeingSet) {
+                    return;
                 }
+                // workaround Polymer's buggy dirty checking and
+                // appendChild(documentFragment)-like behavior of composition setter
+                this.notifyPath('partial.compositionElement.composition', this.partial.stringToDocumentFragment(event.target.value));
+                this.partial.compositionElement.composition = this.partial.stringToDocumentFragment(event.target.value);
+            },
+            _compositionChanged: function (newVal, oldVal, stopPropagation) {
+                return ;
+                this._compositionIsBeingSet = true;
+                if (this.partial && this.partial.compositionElement && this.disabled === false) {
+                    this.partial.compositionElement.composition = newVal;
+                    if (!stopPropagation) {
+                        this.$.editor.value = this.partial.compositionElement.composition.innerHTML || '';
+                    }
+                }
+                this._compositionIsBeingSet = false;
             },
             // Fires when an instance of the element is created
             created: function () {},
