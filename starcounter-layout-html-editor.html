@@ -40,9 +40,15 @@ version: 0.0.0
         </style>
         <label class="partial-picker">
             <input
+                list="selector-autocomplete"
                 type="text"
                 placeholder="css selector for partial to edit"
                 value="{{selector::input}}"/>
+            <datalist id="selector-autocomplete">
+                <template is="dom-repeat" items="{{knownSelectors}}">
+                  <option value="{{item}}"></option>
+                </template>
+            </datalist>
         </label>
         <!-- <code>{{selector}}</code> -->
         <div id="editor-area">
@@ -90,6 +96,10 @@ version: 0.0.0
                     type: String,
                     observer: '_contentChanged',
                     value: ''
+                },
+                knownSelectors: {
+                    type: Array,
+                    value: []
                 }
             },
 
@@ -109,10 +119,22 @@ version: 0.0.0
                 }
             },
             // Fires when an instance of the element is created
-            created: function () {},
+            created: function () {
+            },
 
             // Fires when the local DOM has been fully prepared
-            ready: function () {},
+            ready: function() {
+                var that = this;
+                var elems = Array.prototype.slice.call(document.querySelectorAll("starcounter-include"));
+                elems.forEach(function(elem) {
+                    var selector = trySelectorFromAttribute("slot", elem) ||
+                        trySelectorFromAttribute("partial-id", elem) ||
+                        trySelectorFromAttribute("id", elem);
+                    if (selector) {
+                        that.push("knownSelectors", selector);
+                    }
+                });
+            },
 
             // Fires when the element was inserted into the document
             attached: function () {},
@@ -150,6 +172,18 @@ version: 0.0.0
 
             }
         });
+
+        function matchElement(selector, elem) {
+            return document.querySelector(selector) === elem;
+        }
+
+        function trySelectorFromAttribute(attr, elem) {
+            var selector = '[' + attr + '="' + elem.getAttribute(attr) + '"]';
+            if (matchElement(selector, elem)) {
+                return selector;
+            }
+            return false;
+        }
 
         function selectElementByString(selector) {
             var element;
