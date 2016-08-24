@@ -124,6 +124,10 @@ version: 0.0.0
 
             // Fires when the local DOM has been fully prepared
             ready: function() {
+                this.addEventListener('mouseup', function(ev) {
+                    window.dispatchEvent(new Event('resize')); //fix resizing of ACE edior
+                });
+
                 var that = this;
                 var elems = Array.prototype.slice.call(document.querySelectorAll("starcounter-include"));
                 elems.forEach(function(elem) {
