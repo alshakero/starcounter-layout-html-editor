@@ -56,185 +56,212 @@ version: 0.0.0
         </style>
         <label class="partial-picker">
             <input
+                list="selector-autocomplete"
                 type="text"
                 placeholder="css selector for partial to edit"
                 value="{{selector::input}}"/>
-        </label>
-        <juicy-highlight id="highlightScopeSelected" strokewidth="1" strokecolor="#C0C0C0" strokeoffset="2" overlay></juicy-highlight>
-        <!-- <code>{{selector}}</code> -->
-        <div id="editor-area">
-            <div>
-                <juicy-ace-editor
-                    id="editor"
-                    style="height: 100%;"
-                    mode="ace/mode/html"
-                    readonly$="{{disabled}}"
-                    value="{{content}}"
-                    on-change="aceChanged"
-                    wrapmode="true"></juicy-ace-editor>
-            </div>
-            <div>
-                <!-- <juicy-highlight id="highlightTileRollover" strokewidth="1" strokecolor="#1E90FF" strokeoffset="2" fill="rgba(0, 191, 255, 0.2)"></juicy-highlight> -->
-                <juicy-highlight id="highlightElementSelected" strokewidth="2" strokecolor="#1E90FF" strokeoffset="2"></juicy-highlight>
-                <juicy-dom-tree-view
-                    id="tree"
-                    disabled$="{{disabled}}"
-                    doc="{{partial.compositionElement.composition::change}}"
-                    on-selected-element-changed="selectedElementChanged"
-                    ></juicy-dom-tree-view>
-            </div>
+            <datalist id="selector-autocomplete">
+                <template is="dom-repeat" items="{{knownSelectors}}">
+                  <option value="{{item}}"></option>
+                </template>
+    </datalist>
+    </label>
+    <juicy-highlight id="highlightScopeSelected" strokewidth="1" strokecolor="#C0C0C0" strokeoffset="2" overlay></juicy-highlight>
+    <!-- <code>{{selector}}</code> -->
+    <div id="editor-area">
+        <div>
+            <juicy-ace-editor id="editor" style="height: 100%;" mode="ace/mode/html" readonly$="{{disabled}}" value="{{content}}" on-change="aceChanged" wrapmode="true"></juicy-ace-editor>
         </div>
-        <div id="buttons">
-            <button on-click="revert" disabled$="{{disabled}}">Revert</button>
-            <button on-click="restore" disabled$="{{disabled}}">Restore default</button>
-            <button on-click="save" disabled$="{{disabled}}">Save</button>
+        <div>
+            <!-- <juicy-highlight id="highlightTileRollover" strokewidth="1" strokecolor="#1E90FF" strokeoffset="2" fill="rgba(0, 191, 255, 0.2)"></juicy-highlight> -->
+            <juicy-highlight id="highlightElementSelected" strokewidth="2" strokecolor="#1E90FF" strokeoffset="2"></juicy-highlight>
+            <juicy-dom-tree-view id="tree" disabled$="{{disabled}}" doc="{{partial.compositionElement.composition::change}}" on-selected-element-changed="selectedElementChanged"></juicy-dom-tree-view>
         </div>
-        <p>
-            To distribute the content use
-            <code>&lt;content select="[slot='<em>id</em>']"&gt;&lt;/content&gt;</code>
-            where <code><em>id</em></code> is the index or given custom slot id</p>
+    </div>
+    <div id="buttons">
+        <button on-click="revert" disabled$="{{disabled}}">Cancel</button>
+        <button on-click="restore" disabled$="{{disabled}}">Restore default</button>
+        <button on-click="save" disabled$="{{disabled}}">Save</button>
+    </div>
+    <p>
+        To distribute the content use
+        <code>&lt;content select="[slot='<em>id</em>']"&gt;&lt;/content&gt;</code> where <code><em>id</em></code> is the index or given custom slot id</p>
     </template>
 
     <!-- Registers custom element -->
     <script>
-    (function () {
-        Polymer({
-            is: 'starcounter-layout-html-editor',
+        (function() {
+            Polymer({
+                is: 'starcounter-layout-html-editor',
 
-            properties: {
-                selector: {
-                    type: String,
-                    observer: '_selectorChanged'
-                },
-                disabled: {
-                    type: Boolean,
-                    value: true
-                },
-                composition: {
-                    type: Object,
-                    observer: '_compositionChanged'
-                },
-                /**
-                * Reference to the partial (<starcounter-include>), that will be edited.
-                * @type {HTMLElement}
-                */
-                partial:{
-                    type: Object
-                }
-            },
-
-//todo move it to another custom element
-selectedElementChanged: function (event) {
-    var element = event.detail.value;
-    switch (element.tagName){
-        case 'CONTENT':
-            element = element.getDistributedNodes();
-            break;
-        case 'SLOT':
-            element = element.assignedNodes();
-            break;
-    }
-    this.$.highlightElementSelected.show(element);
-},
-
-            observers: [
-                'compositionHTMLChanged(partial.compositionElement.shadowRoot.innerHTML)'
-            ],
-            // Each method referenced in observers must be defined in
-            // element prototype. The argument to the method is the new value
-            // of the sub-property.
-            compositionHTMLChanged: function(html) {
-                console.log('partial..innerHTML changed' + html);
-                this._compositionIsBeingSet = true;
-                this.content = html || '';
-                this._compositionIsBeingSet = false;
-            },
-            _compositionIsBeingSet: false,
-            _selectorChanged: function (newVal, oldVal) {
-                this.partial = selectElementByString(newVal);
-                if (this.partial){
-                    this.set('disabled', false);
-                    this.$.highlightScopeSelected.show([this.parentElement, this.partial]);
-                    this.composition = this.partial.compositionElement.shadowRoot || document.createDocumentFragment();
-                } else {
-                    this.set('disabled', true);
-                    this.$.highlightScopeSelected.hide();
-                    this.composition = null;
-                }
-            },
-            aceChanged: function(event, oldVal){
-                // Prevent looping by Polymer's notification protocol
-                if (this._compositionIsBeingSet) {
-                    return;
-                }
-                // workaround Polymer's buggy dirty checking and
-                // appendChild(documentFragment)-like behavior of composition setter
-                this.notifyPath('partial.compositionElement.composition', this.partial.stringToDocumentFragment(event.target.value));
-                this.partial.compositionElement.composition = this.partial.stringToDocumentFragment(event.target.value);
-            },
-            _compositionChanged: function (newVal, oldVal, stopPropagation) {
-                return ;
-                this._compositionIsBeingSet = true;
-                if (this.partial && this.partial.compositionElement && this.disabled === false) {
-                    this.partial.compositionElement.composition = newVal;
-                    if (!stopPropagation) {
-                        this.$.editor.value = this.partial.compositionElement.composition.innerHTML || '';
+                properties: {
+                    selector: {
+                        type: String,
+                        observer: '_selectorChanged'
+                    },
+                    disabled: {
+                        type: Boolean,
+                        value: true
+                    },
+                    composition: {
+                        type: Object,
+                        observer: '_compositionChanged'
+                    },
+                    knownSelectors: {
+                        type: Array,
+                        value: []
+                    },
+                    /**
+                     * Reference to the partial (<starcounter-include>), that will be edited.
+                     * @type {HTMLElement}
+                     */
+                    partial: {
+                        type: Object
                     }
+                },
+
+                //todo move it to another custom element
+                selectedElementChanged: function(event) {
+                    var element = event.detail.value;
+                    switch (element.tagName) {
+                        case 'CONTENT':
+                            element = element.getDistributedNodes();
+                            break;
+                        case 'SLOT':
+                            element = element.assignedNodes();
+                            break;
+                    }
+                    this.$.highlightElementSelected.show(element);
+                },
+
+                observers: [
+                    'compositionHTMLChanged(partial.compositionElement.shadowRoot.innerHTML)'
+                ],
+                // Each method referenced in observers must be defined in
+                // element prototype. The argument to the method is the new value
+                // of the sub-property.
+                compositionHTMLChanged: function(html) {
+                    console.log('partial..innerHTML changed' + html);
+                    this._compositionIsBeingSet = true;
+                    this.content = html || '';
+                    this._compositionIsBeingSet = false;
+                },
+                _compositionIsBeingSet: false,
+                _selectorChanged: function(newVal, oldVal) {
+                    this.partial = selectElementByString(newVal);
+                    if (this.partial) {
+                        this.set('disabled', false);
+                        this.$.highlightScopeSelected.show([this.parentElement, this.partial]);
+                        this.composition = this.partial.compositionElement.shadowRoot || document.createDocumentFragment();
+                    } else {
+                        this.set('disabled', true);
+                        this.$.highlightScopeSelected.hide();
+                        this.composition = null;
+                    }
+                },
+                aceChanged: function(event, oldVal) {
+                    // Prevent looping by Polymer's notification protocol
+                    if (this._compositionIsBeingSet) {
+                        return;
+                    }
+                    // workaround Polymer's buggy dirty checking and
+                    // appendChild(documentFragment)-like behavior of composition setter
+                    this.notifyPath('partial.compositionElement.composition', this.partial.stringToDocumentFragment(event.target.value));
+                    this.partial.compositionElement.composition = this.partial.stringToDocumentFragment(event.target.value);
+                },
+                _compositionChanged: function(newVal, oldVal, stopPropagation) {
+                    return;
+                    this._compositionIsBeingSet = true;
+                    if (this.partial && this.partial.compositionElement && this.disabled === false) {
+                        this.partial.compositionElement.composition = newVal;
+                        if (!stopPropagation) {
+                            this.$.editor.value = this.partial.compositionElement.composition.innerHTML || '';
+                        }
+                    }
+                    this._compositionIsBeingSet = false;
+                },
+                // Fires when an instance of the element is created
+                created: function() {},
+
+                // Fires when the local DOM has been fully prepared
+                ready: function() {
+                    this.addEventListener('mouseup', function(ev) {
+                        window.dispatchEvent(new Event('resize')); //fix resizing of ACE edior
+                    });
+
+                    // populate knownSelectors list
+                    var knownSelectors = Array.prototype.reduce.call(
+                        document.querySelectorAll("starcounter-include"),
+                        function(result, elem) {
+                            var selector = trySelectorFromAttribute("slot", elem) ||
+                                trySelectorFromAttribute("partial-id", elem) ||
+                                trySelectorFromAttribute("id", elem);
+                            if (selector) {
+                                result.push(selector);
+                            }
+                            return result;
+                        }, []
+                    );
+                    this.set('knownSelectors', knownSelectors);
+                },
+
+                // Fires when the element was inserted into the document
+                attached: function() {},
+
+                // Fires when the element was removed from the document
+                detached: function() {},
+
+                // Fires when an attribute was added, removed, or updated
+                attributeChanged: function(name, type) {},
+
+
+                /**
+                 * Saves given or current layout as stored one, (TODO:) notifies binding about it.
+                 * @param  {String} [layoutStr] layout to be saved, if not given current one will be used
+                 */
+                save: function() {
+                    // TODO: move saving from sc-include to here
+                    return this.partial && this.partial.saveLayout();
+                },
+                restore: function() {
+                    if (!this.partial) {
+                        return false;
+                    }
+                    // TODO: move editing features from partial to here
+                    this.partial._forceLayoutChange = true;
+                    this.partial._compositionChanged("");
+                    return this.set('content', this.partial.compositionElement.shadowRoot && this.partial.compositionElement.shadowRoot.innerHTML || '');
+
+                },
+                revert: function() {
+                    if (!this.partial) {
+                        return false;
+                    }
+                    return this.set('content', this.partial.storedLayout);
+
                 }
-                this._compositionIsBeingSet = false;
-            },
-            // Fires when an instance of the element is created
-            created: function () {},
+            });
 
-            // Fires when the local DOM has been fully prepared
-            ready: function () {},
+            function matchElement(selector, elem) {
+                return document.querySelector(selector) === elem;
+            }
 
-            // Fires when the element was inserted into the document
-            attached: function () {},
-
-            // Fires when the element was removed from the document
-            detached: function () {},
-
-            // Fires when an attribute was added, removed, or updated
-            attributeChanged: function (name, type) {},
-
-
-            /**
-             * Saves given or current layout as stored one, (TODO:) notifies binding about it.
-             * @param  {String} [layoutStr] layout to be saved, if not given current one will be used
-             */
-            save: function () {
-                // TODO: move saving from sc-include to here
-                return this.partial && this.partial.saveLayout();
-            },
-            restore: function () {
-                if (!this.partial) {
-                    return false;
+            function trySelectorFromAttribute(attr, elem) {
+                var selector = '[' + attr + '="' + elem.getAttribute(attr) + '"]';
+                if (matchElement(selector, elem)) {
+                    return selector;
                 }
-                // TODO: move editing features from partial to here
-                this.partial._forceLayoutChange = true;
-                this.partial._compositionChanged("");
-                return this.set('content',this.partial.compositionElement.shadowRoot && this.partial.compositionElement.shadowRoot.innerHTML || '');
+                return false;
+            }
 
-            },
-            revert: function () {
-                if (!this.partial) {
-                    return false;
-                }
-                return this.set('content', this.partial.storedLayout);
+            function selectElementByString(selector) {
+                var element;
+                try {
+                    element = document.querySelector(selector);
+                } catch (e) {}
+                return element && element.tagName === 'STARCOUNTER-INCLUDE' && element || null;
 
             }
-        });
-
-        function selectElementByString(selector) {
-            var element;
-            try {
-                element = document.querySelector(selector);
-            } catch (e) {
-            }
-            return element && element.tagName === 'STARCOUNTER-INCLUDE' && element || null;
-
-        }
-    }());
+        }());
     </script>
 </dom-module>
