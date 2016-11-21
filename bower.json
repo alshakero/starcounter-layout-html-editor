@@ -20,12 +20,12 @@
     "Gruntfile.json"
   ],
   "dependencies": {
-    "webcomponentsjs": "^0.7.2",
-    "polymer": "^1.5.0",
+    "webcomponentsjs": "^0.7.23",
+    "polymer": "^1.7.0",
     "juicy-ace-editor": "^1.1.1"
   },
   "devDependencies": {
     "web-component-tester": "^4.2.1",
-    "starcounter-include": "StarcounterPrefabs/launcher-include#juicy-composition"
+    "starcounter-include": ">=2.0.1"
   }
 }
