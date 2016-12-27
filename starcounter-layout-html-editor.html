@@ -64,33 +64,39 @@ version: 0.0.0
                 <template is="dom-repeat" items="{{knownSelectors}}">
                   <option value="{{item}}"></option>
                 </template>
-    </datalist>
-    </label>
-    <juicy-highlight id="highlightScopeSelected" strokewidth="1" strokecolor="#C0C0C0" strokeoffset="2" overlay></juicy-highlight>
-    <!-- <code>{{selector}}</code> -->
-    <div id="editor-area">
-        <div>
-            <juicy-ace-editor id="editor" style="height: 100%;" mode="ace/mode/html" readonly$="{{disabled}}" value="{{content}}" on-change="aceChanged" wrapmode="true"></juicy-ace-editor>
+            </datalist>
+        </label>
+        <juicy-highlight id="highlightScopeSelected" strokewidth="1" strokecolor="#C0C0C0" strokeoffset="2" overlay></juicy-highlight>
+        <!-- <code>{{selector}}</code> -->
+        <div id="editor-area">
+            <div>
+                <juicy-ace-editor id="editor" style="height: 100%;" mode="ace/mode/html" readonly$="{{disabled}}" value="{{content}}" on-change="aceChanged" wrapmode="true"></juicy-ace-editor>
+            </div>
+            <div>
+                <!-- <juicy-highlight id="highlightTileRollover" strokewidth="1" strokecolor="#1E90FF" strokeoffset="2" fill="rgba(0, 191, 255, 0.2)"></juicy-highlight> -->
+                <juicy-highlight id="highlightElementSelected" strokewidth="2" strokecolor="#1E90FF" strokeoffset="2"></juicy-highlight>
+                <juicy-dom-tree-view id="tree" disabled$="{{disabled}}" doc="{{partial.compositionElement.composition::change}}" on-selected-element-changed="selectedElementChanged"></juicy-dom-tree-view>
+            </div>
         </div>
-        <div>
-            <!-- <juicy-highlight id="highlightTileRollover" strokewidth="1" strokecolor="#1E90FF" strokeoffset="2" fill="rgba(0, 191, 255, 0.2)"></juicy-highlight> -->
-            <juicy-highlight id="highlightElementSelected" strokewidth="2" strokecolor="#1E90FF" strokeoffset="2"></juicy-highlight>
-            <juicy-dom-tree-view id="tree" disabled$="{{disabled}}" doc="{{partial.compositionElement.composition::change}}" on-selected-element-changed="selectedElementChanged"></juicy-dom-tree-view>
+        <div id="buttons">
+            <button on-click="revert" disabled$="{{disabled}}">Cancel</button>
+            <button on-click="restore" disabled$="{{disabled}}">Restore default</button>
+            <button on-click="save" disabled$="{{disabled}}">Save</button>
+            <label><input type="checkbox" checked="{{observeMutations::change}}" disabled$="{{disabled}}"/>Observe Shadow DOM mutations / I'll use browser's dev tools</label>
         </div>
-    </div>
-    <div id="buttons">
-        <button on-click="revert" disabled$="{{disabled}}">Cancel</button>
-        <button on-click="restore" disabled$="{{disabled}}">Restore default</button>
-        <button on-click="save" disabled$="{{disabled}}">Save</button>
-    </div>
-    <p>
-        To distribute the content use
+        <p>
+            To distribute the content use
         <code>&lt;content select="[slot='<em>id</em>']"&gt;&lt;/content&gt;</code> where <code><em>id</em></code> is the index or given custom slot id</p>
     </template>
 
-    <!-- Registers custom element -->
     <script>
         (function() {
+            const OBSERVER_INIT = {
+                childList: true,
+                attributes: true,
+                characterData: true,
+                subtree: true
+            };
             Polymer({
                 is: 'starcounter-layout-html-editor',
 
@@ -117,6 +123,15 @@ version: 0.0.0
                      */
                     partial: {
                         type: Object
+                    },
+                    /**
+                     * Should mutations made to composition made by 3rd party be observed?
+                     * @type {Object}
+                     */
+                    observeMutations: {
+                        type: Boolean,
+                        observer: '_updateObserver',
+                        value: false
                     }
                 },
 
@@ -158,6 +173,7 @@ version: 0.0.0
                         this.$.highlightScopeSelected.hide();
                         this.composition = null;
                     }
+                    this._updateObserver();
                 },
                 aceChanged: function(event, oldVal) {
                     // Prevent looping by Polymer's notification protocol
@@ -173,15 +189,44 @@ version: 0.0.0
                     return;
                     this._compositionIsBeingSet = true;
                     if (this.partial && this.partial.compositionElement && this.disabled === false) {
+                        // stop observing mutations
+                        this.observer.disconnect();
                         this.partial.compositionElement.composition = newVal;
                         if (!stopPropagation) {
                             this.$.editor.value = this.partial.compositionElement.composition.innerHTML || '';
                         }
+
+                        // start observing mutations if needed
+                        this._updateObserver();
                     }
                     this._compositionIsBeingSet = false;
                 },
-                // Fires when an instance of the element is created
-                created: function() {},
+                /**
+                 * Connects or disconnects the mutation observer according to required properties
+                 */
+                _updateObserver: function(){
+                    if(this.observeMutations && this.partial){
+                        this.observer.observe(this.partial.compositionElement.shadowRoot, OBSERVER_INIT);
+                        // propt developer-firendly message, with a reference to the observed Shadow DOM
+                        console.info('starcounter-layout-html-editor (', this,
+                            ') is now observing all the mutations made to partials Shadow DOM, feel free to change it with your browser\'s dev tools.',
+                            this.partial.compositionElement.shadowRoot);
+                    } else {
+                        this.observer.disconnect();
+                    }
+
+                },
+                /**
+                 * Creates an observer for external changes made to composition, to notify the editor
+                 */
+                created: function () {
+                    const editor = this;
+                    // create an observer
+                    this.observer = new MutationObserver(function shadowDOMChanged(mutations){
+                        // notify Polymer's data binding
+                        editor.set('content', editor.partial.compositionElement.shadowRoot && editor.partial.compositionElement.shadowRoot.innerHTML || '')
+                    });
+                },
 
                 // Fires when the local DOM has been fully prepared
                 ready: function() {
