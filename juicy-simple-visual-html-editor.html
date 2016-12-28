@@ -1,0 +1,108 @@
+<!--
+`juicy-simple-visual-html-editor`
+Custom Element with simple controls to edit any HTML Document Fragment
+@element juicy-simple-visual-html-editor
+version: 0.0.0
+-->
+<!-- Imports Polymer -->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../juicy-dom-tree-view/juicy-dom-tree-view.html">
+<link rel="import" href="../juicy-highlight/src/juicy-highlight.html" />
+
+<!-- Defines element markup -->
+<dom-module id="juicy-simple-visual-html-editor">
+    <template>
+        <style>
+            juicy-dom-tree-view{
+                --juicy-dom-tree-selected-background-color: rgba(30, 144, 255, 0.5);
+            }
+        </style>
+        <button on-click="hideElements">hide</button>
+        <!-- <juicy-highlight id="highlightTileRollover" strokewidth="1" strokecolor="#1E90FF" strokeoffset="2" fill="rgba(0, 191, 255, 0.2)"></juicy-highlight> -->
+        <juicy-highlight id="highlightElementSelected" strokewidth="2" strokecolor="#1E90FF" strokeoffset="2"></juicy-highlight>
+        <juicy-dom-tree-view id="tree" disabled$="{{disabled}}" doc="{{doc}}" on-selected-element-changed="selectedElementChanged"></juicy-dom-tree-view>
+
+    </template>
+
+    <script>
+        (function() {
+            Polymer({
+                is: 'juicy-simple-visual-html-editor',
+
+                properties: {
+                    doc: {
+                        type: Object,
+                        // observer: '_docChanged'
+                    },
+                    disabled: {
+                        type: Boolean,
+                        value: true
+                    }
+                },
+
+                //todo move it to another custom element
+                selectedElementChanged: function(event) {
+                    var element = event.detail.value;
+                    switch (element.tagName) {
+                        case 'CONTENT':
+                            element = element.getDistributedNodes();
+                            break;
+                        case 'SLOT':
+                            element = element.assignedNodes();
+                            break;
+                    }
+                    this.elements = [element];
+                    this.$.highlightElementSelected.show(element);
+                },
+
+                observers: [
+                    'compositionHTMLChanged(partial.compositionElement.shadowRoot.innerHTML)'
+                ],
+                // Each method referenced in observers must be defined in
+                // element prototype. The argument to the method is the new value
+                // of the sub-property.
+                compositionHTMLChanged: function(html) {
+                    console.log('partial..innerHTML changed' + html);
+                    this._compositionIsBeingSet = true;
+                    this.content = html || '';
+                    this._compositionIsBeingSet = false;
+                },
+                _compositionIsBeingSet: false,
+                _compositionChanged: function(newVal, oldVal, stopPropagation) {
+                    return;
+                    this._compositionIsBeingSet = true;
+                    if (this.partial && this.partial.compositionElement && this.disabled === false) {
+                        // stop observing mutations
+                        this.observer.disconnect();
+                        this.partial.compositionElement.composition = newVal;
+                        if (!stopPropagation) {
+                            this.$.editor.value = this.partial.compositionElement.composition.innerHTML || '';
+                        }
+
+                        // start observing mutations if needed
+                        this._updateObserver();
+                    }
+                    this._compositionIsBeingSet = false;
+                },
+
+                hideElements: function(){
+                    for(var elementNo = 0, len = this.elements.length; elementNo < len; elementNo++){
+                        let element = this.elements[elementNo];
+                        element.dataset.originalDisplay = element.style.display;
+                        element.style.display = 'none';
+                    }
+                },
+                showElements: function(){
+                    for(var elementNo = 0, len = this.elements.length; elementNo < len; elementNo++){
+                        let element = this.elements[elementNo];
+                        element.dataset.originalDisplay = element.style.display;
+                        element.style.display = 'none';
+                    }
+                }
+
+            });
+
+
+        }());
+    </script>
+</dom-module>

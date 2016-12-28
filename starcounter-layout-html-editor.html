@@ -9,6 +9,7 @@ version: 0.0.0
 <link rel="import" href="../juicy-ace-editor/juicy-ace-editor.html">
 <link rel="import" href="../juicy-dom-tree-view/juicy-dom-tree-view.html">
 <link rel="import" href="../juicy-highlight/src/juicy-highlight.html" />
+<link rel="import" href="juicy-simple-visual-html-editor.html" />
 
 <!-- Defines element markup -->
 <dom-module id="starcounter-layout-html-editor">
@@ -73,9 +74,7 @@ version: 0.0.0
                 <juicy-ace-editor id="editor" style="height: 100%;" mode="ace/mode/html" readonly$="{{disabled}}" value="{{content}}" on-change="aceChanged" wrapmode="true"></juicy-ace-editor>
             </div>
             <div>
-                <!-- <juicy-highlight id="highlightTileRollover" strokewidth="1" strokecolor="#1E90FF" strokeoffset="2" fill="rgba(0, 191, 255, 0.2)"></juicy-highlight> -->
-                <juicy-highlight id="highlightElementSelected" strokewidth="2" strokecolor="#1E90FF" strokeoffset="2"></juicy-highlight>
-                <juicy-dom-tree-view id="tree" disabled$="{{disabled}}" doc="{{partial.compositionElement.composition::change}}" on-selected-element-changed="selectedElementChanged"></juicy-dom-tree-view>
+                <juicy-simple-visual-html-editor disabled$="{{disabled}}" doc="{{partial.compositionElement.composition::change}}"></juicy-simple-visual-html-editor>
             </div>
         </div>
         <div id="buttons">
@@ -133,20 +132,6 @@ version: 0.0.0
                         observer: '_updateObserver',
                         value: false
                     }
-                },
-
-                //todo move it to another custom element
-                selectedElementChanged: function(event) {
-                    var element = event.detail.value;
-                    switch (element.tagName) {
-                        case 'CONTENT':
-                            element = element.getDistributedNodes();
-                            break;
-                        case 'SLOT':
-                            element = element.assignedNodes();
-                            break;
-                    }
-                    this.$.highlightElementSelected.show(element);
                 },
 
                 observers: [
