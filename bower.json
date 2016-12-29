@@ -24,7 +24,7 @@
     "polymer": "^1.7.0",
     "juicy-ace-editor": "^1.1.1",
     "juicy-dom-tree-view": "juicy/juicy-dom-tree-view#gh-pages",
-    "juicy-highlight": "Juicy/juicy-highlight#accept-textnodes"
+    "juicy-highlight": "juicy-highlight#>=1.2.0"
   },
   "devDependencies": {
     "web-component-tester": ">=5.0.0",
