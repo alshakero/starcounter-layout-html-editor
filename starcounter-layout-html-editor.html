@@ -218,9 +218,15 @@ version: 0.0.0
                     this.addEventListener('mouseup', function(ev) {
                         window.dispatchEvent(new Event('resize')); //fix resizing of ACE edior
                     });
-
+                    this.refreshSelectors();
+                },
+                /**
+                 * Refreshes the list of currently available partials to populate dropdown
+                 * @return {starcounter-layout-html-editor} self
+                 */
+                refreshSelectors: function(){
                     // populate knownSelectors list
-                    var knownSelectors = Array.prototype.reduce.call(
+                    const knownSelectors = Array.prototype.reduce.call(
                         document.querySelectorAll("starcounter-include"),
                         function(result, elem) {
                             var selector = trySelectorFromAttribute("slot", elem) ||
@@ -233,6 +239,7 @@ version: 0.0.0
                         }, []
                     );
                     this.set('knownSelectors', knownSelectors);
+                    return this;
                 },
 
                 // Fires when the element was inserted into the document

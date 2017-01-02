@@ -78,14 +78,22 @@
                     with
                     <starcounter-include>
                     </starcounter-include>
-                </div>`
+                </div>`,
+                LauncherLayoutInfo: {
+                    PartialId: 'RootPartial.html'
+                }
             };
             setTimeout(function () {
                 var template = document.querySelector('starcounter-include starcounter-include');
                 template.partial = {
                     Html: `<h3>Nested</h3>
-                        <p>starcounter-include</p>`
+                        <p>starcounter-include</p>`,
+                    LauncherLayoutInfo: {
+                        PartialId: 'NestedPartial.html'
+                    }
                 }
+                // refresh the suggested partials dropdown
+                document.querySelector('starcounter-layout-html-editor').refreshSelectors();
             });
         </script>
     </section>
