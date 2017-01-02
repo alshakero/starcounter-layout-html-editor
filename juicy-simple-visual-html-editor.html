@@ -13,7 +13,7 @@ version: 0.0.0
 <dom-module id="juicy-simple-visual-html-editor">
     <template>
         <style>
-           juicy-dom-tree-view{
+            juicy-dom-tree-view{
                 height: calc(100% - 35px);
                 overflow: auto;
                 --juicy-dom-tree-selected-background-color: rgba(30, 144, 255, 0.5);
@@ -24,7 +24,7 @@ version: 0.0.0
             {
                 padding: 2px 2px;
                 background-color: #fefefe
-            } 
+            }
             #resize-area-hidden input
             {
                 width: 60px;
@@ -33,7 +33,7 @@ version: 0.0.0
                 border-radius: 3px;
                 border: solid 1px #999;
                 outline: none;
-            }    
+            }
             #resize-area-hidden
             {
                 opacity: 0;
@@ -55,15 +55,15 @@ version: 0.0.0
             }
             .toolkit-ui button:hover
             {
-                 background: #ccc;
+                background: #ccc;
             }
             .toolkit-ui button:active
             {
-                 background: #AAF;
+                background: #AAF;
             }
             #width-value:valid + #set-width-btn
             {
-               fill: #009029
+                fill: #009029
             }
         </style>
         <div id="tree-and-tools">
@@ -185,15 +185,15 @@ version: 0.0.0
                     this._compositionIsBeingSet = false;
                 },
 
-                hideElements: function(){
-                    for(var elementNo = 0, len = this.elements.length; elementNo < len; elementNo++){
+                hideElements: function() {
+                    for (var elementNo = 0, len = this.elements.length; elementNo < len; elementNo++) {
                         let element = this.elements[elementNo];
                         element.dataset.originalDisplay = element.style.display;
                         element.style.display = 'none';
                     }
                 },
-                showElements: function(){
-                    for(var elementNo = 0, len = this.elements.length; elementNo < len; elementNo++){
+                showElements: function() {
+                    for (var elementNo = 0, len = this.elements.length; elementNo < len; elementNo++) {
                         let element = this.elements[elementNo];
                         element.dataset.originalDisplay = element.style.display;
                         element.style.display = 'none';
