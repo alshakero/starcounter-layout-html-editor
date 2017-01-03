@@ -241,11 +241,11 @@ version: 0.0.0
                     });
                     this.refreshSelectors();
                     
-                    const that = this;   
+                    var that = this;   
 
-                    const panner = document.querySelector('#panner');
-                    const leftPanel = document.querySelector('#left-panel');
-                    const rightPanel = document.querySelector('#right-panel');
+                    var panner = document.getElementById('panner');
+                    var leftPanel = document.getElementById('left-panel');
+                    var rightPanel = document.getElementById('right-panel');
                     
                     panner.addEventListener('mousedown', function(ev) {
                         that.isMouseDown = true;
@@ -268,8 +268,8 @@ version: 0.0.0
                         
                         if(that.isMouseDown)
                         {
-                            const leftGrow = (ev.clientX - that.offsetLeft) / that.clientWidth; /* offsetWidth breaks with zooming */
-                            const rightGrow = 1 - leftGrow;
+                            var leftGrow = (ev.clientX - that.offsetLeft) / that.clientWidth; /* offsetWidth breaks with zooming */
+                            var rightGrow = 1 - leftGrow;
                             
                             leftPanel.style.flexGrow = leftGrow;
                             rightPanel.style.flexGrow = rightGrow;   
