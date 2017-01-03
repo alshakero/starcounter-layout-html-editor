@@ -14,6 +14,10 @@
     <!-- Partials to edit -->
     <link rel="import" href="../starcounter-include/starcounter-include.html">
     <style>
+        h1, h2
+        {  
+            margin-top: 10px!important
+        }
         body.markdown-body{
             overflow: auto;
         }
@@ -33,6 +37,16 @@
         .input>:nth-child(2){
             width: 25em;
         }
+        .preview
+        {
+            display: flex;
+            align-items: stretch;
+            padding-bottom: 100px;
+        }
+        .preview section
+        {
+            flex: 1;
+        }
     </style>
 </head>
 <body class="markdown-body">
@@ -47,56 +61,57 @@
             <!-- Runs custom element -->
             <starcounter-layout-html-editor></starcounter-layout-html-editor>
         </section>
-        <section>
-            <h2>Partials structure</h2>
-            <pre><code>&lt;starcounter-include&gt;
-    Some
-    &lt;span&gt;Content&lt;/span&gt;
-    &lt;div slot="defined-slot-name"&gt;
-        with
-        &lt;starcounter-include&gt;
-            &lt;h3&gt;Nested&lt;/h3&gt;
-            &lt;p&gt;starcounter-include&lt;/p&gt;
-        &lt;/starcounter-include&gt;
-    &lt;/div&gt;
-&lt;/starcounter-include&gt;</code></pre>
-        </section>
     </div>
     <hr>
-    <section>
-        <h2>Result</h2>
-        <!-- Partial to edit -->
-        <starcounter-include>
-        </starcounter-include>
-        <script>
-            var script = document._currentScript || document.currentScript;
-            var template = script.previousElementSibling;
-            template.partial = {
-                Html: `Some
-                <span>Content</span>
-                <div slot="defined-slot-name">
-                    with
-                    <starcounter-include>
-                    </starcounter-include>
-                </div>`,
-                LauncherLayoutInfo: {
-                    PartialId: 'RootPartial.html'
-                }
-            };
-            setTimeout(function () {
-                var template = document.querySelector('starcounter-include starcounter-include');
-                template.partial = {
-                    Html: `<h3>Nested</h3>
-                        <p>starcounter-include</p>`,
-                    LauncherLayoutInfo: {
-                        PartialId: 'NestedPartial.html'
-                    }
-                }
-                // refresh the suggested partials dropdown
-                document.querySelector('starcounter-layout-html-editor').refreshSelectors();
-            });
-        </script>
-    </section>
-
+    <div class="preview">
+        <section>
+            <h2>Result</h2>
+            <!-- Partial to edit -->
+            <starcounter-include>
+            </starcounter-include>
+            <script>
+                    var script = document._currentScript || document.currentScript;
+                    var template = script.previousElementSibling;
+                    template.partial = {
+                        Html: `Some
+                        <span>Content</span>
+                        <div slot="defined-slot-name">
+                            with
+                            <starcounter-include>
+                            </starcounter-include>
+                        </div>`,
+                        LauncherLayoutInfo: {
+                            PartialId: 'RootPartial.html'
+                        }
+                    };
+                    setTimeout(function () {
+                        var template = document.querySelector('starcounter-include starcounter-include');
+                        template.partial = {
+                            Html: `<h3>Nested</h3>
+                                <p>starcounter-include</p>`,
+                            LauncherLayoutInfo: {
+                                PartialId: 'NestedPartial.html'
+                            }
+                        }
+                        // refresh the suggested partials dropdown
+                        document.querySelector('starcounter-layout-html-editor').refreshSelectors();
+                    });
+                </script>
+            </section>
+            <section>
+                <h2>Partials structure</h2>
+                <pre><code>&lt;starcounter-include&gt;
+                    Some
+                    &lt;span&gt;Content&lt;/span&gt;
+                    &lt;div slot="defined-slot-name"&gt;
+                        with
+                        &lt;starcounter-include&gt;
+                            &lt;h3&gt;Nested&lt;/h3&gt;
+                            &lt;p&gt;starcounter-include&lt;/p&gt;
+                        &lt;/starcounter-include&gt;
+                    &lt;/div&gt;
+                &lt;/starcounter-include&gt;</code></pre>
+            </section>
+        </div>
 </body>
 </html>

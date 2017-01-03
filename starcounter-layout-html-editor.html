@@ -14,13 +14,19 @@ version: 0.0.0
 <!-- Defines element markup -->
 <dom-module id="starcounter-layout-html-editor">
     <template>
-        <style>
+         <style>
             :host{
                 display: flex;
                 resize: both;
                 overflow: auto;
-
+                min-height: 300px;
                 flex-direction: column;
+                -webkit-touch-callout: none; /* iOS Safari */
+                -webkit-user-select: none; /* Chrome/Safari/Opera */
+                -khtml-user-select: none; /* Konqueror */
+                -moz-user-select: none; /* Firefox */
+                -ms-user-select: none; /* Internet Explorer/Edge */
+                user-select: none; /* Non-prefixed version, currently not supported by any browser */
             }
             .partial-picker{
                 width: 100%;
@@ -29,6 +35,7 @@ version: 0.0.0
             .partial-picker > input{
                 flex: 1;
                 min-width: 80%;
+                padding: 5px;
             }
             #editor{
                 height: 100%;
@@ -42,17 +49,29 @@ version: 0.0.0
                 display: flex;
             }
             #editor-area > *{
-                flex: 1 0 5em;
-
-                box-shadow: 0 0  5px grey;
-                margin: 5px;
+                flex-grow: 0.5;
+                flex-shrink: 0;
+                flex-basis: 5px;
+                border: 1px solid #ddd;
                 overflow:auto;
             }
             #editor-area >[disabled]{
                 opacity: 0.35;
             }
-            juicy-simple-visual-html-editor{
-                height: 100%;
+            juicy-dom-tree-view{
+                --juicy-dom-tree-selected-background-color: rgba(30, 144, 255, 0.5);
+            }
+            #panner
+            {
+                flex: 0 0 10px!important;
+                cursor: ew-resize;
+                background: repeating-linear-gradient(
+                45deg,
+                #ccc,
+                #ccc 10px,
+                #eee 10px,
+                #eee 20px
+                );
             }
         </style>
         <label class="partial-picker">
@@ -70,10 +89,12 @@ version: 0.0.0
         <juicy-highlight id="highlightScopeSelected" strokewidth="1" strokecolor="#C0C0C0" strokeoffset="2" overlay></juicy-highlight>
         <!-- <code>{{selector}}</code> -->
         <div id="editor-area">
-            <div>
-                <juicy-ace-editor id="editor" style="height: 100%;" mode="ace/mode/html" readonly$="{{disabled}}" value="{{content}}" on-change="aceChanged" wrapmode="true"></juicy-ace-editor>
+            <div id="left-panel">
+                <juicy-ace-editor id="editor" mode="ace/mode/html" readonly$="{{disabled}}" value="{{content}}" on-change="aceChanged" wrapmode="true"></juicy-ace-editor>
             </div>
-            <div>
+            <div id="panner" title="Drag to pan, double click to reset">
+            </div>
+            <div id="right-panel">
                 <juicy-simple-visual-html-editor disabled$="{{disabled}}" doc="{{partial.compositionElement.composition::change}}"></juicy-simple-visual-html-editor>
             </div>
         </div>
@@ -219,6 +240,45 @@ version: 0.0.0
                         window.dispatchEvent(new Event('resize')); //fix resizing of ACE edior
                     });
                     this.refreshSelectors();
+                    
+                    const that = this;   
+
+                    const panner = document.querySelector('#panner');
+                    const leftPanel = document.querySelector('#left-panel');
+                    const rightPanel = document.querySelector('#right-panel');
+                    
+                    panner.addEventListener('mousedown', function(ev) {
+                        that.isMouseDown = true;
+                    });
+
+                    /* reset on double click */
+                    panner.addEventListener('dblclick', function(ev) {
+                        leftPanel.style.flexGrow = 0.5;
+                        rightPanel.style.flexGrow = 0.5;   
+                        
+                        leftPanel.childNodes[1].style.display = '';
+                        rightPanel.childNodes[1].style.display = '';
+                    });
+
+                    window.addEventListener('mouseup', function(ev) {
+                        that.isMouseDown = false;
+                    });
+
+                    window.addEventListener('mousemove', function(ev) {
+                        
+                        if(that.isMouseDown)
+                        {
+                            const leftGrow = (ev.clientX - that.offsetLeft) / that.clientWidth; /* offsetWidth breaks with zooming */
+                            const rightGrow = 1 - leftGrow;
+                            
+                            leftPanel.style.flexGrow = leftGrow;
+                            rightPanel.style.flexGrow = rightGrow;   
+                            
+                            /* collapse < 20% and > 80% */
+                            leftPanel.childNodes[1].style.display = leftGrow < 0.2 ? 'none' : ''; /* unset != '' */
+                            rightPanel.childNodes[1].style.display = leftGrow > 0.8 ? 'none' : '';
+                        }
+                    });
                 },
                 /**
                  * Refreshes the list of currently available partials to populate dropdown
