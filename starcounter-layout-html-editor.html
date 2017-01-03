@@ -89,12 +89,12 @@ version: 0.0.0
         <juicy-highlight id="highlightScopeSelected" strokewidth="1" strokecolor="#C0C0C0" strokeoffset="2" overlay></juicy-highlight>
         <!-- <code>{{selector}}</code> -->
         <div id="editor-area">
-            <div id="left-panel">
+            <div id="leftPanel">
                 <juicy-ace-editor id="editor" mode="ace/mode/html" readonly$="{{disabled}}" value="{{content}}" on-change="aceChanged" wrapmode="true"></juicy-ace-editor>
             </div>
             <div id="panner" title="Drag to pan, double click to reset">
             </div>
-            <div id="right-panel">
+            <div id="rightPanel">
                 <juicy-simple-visual-html-editor disabled$="{{disabled}}" doc="{{partial.compositionElement.composition::change}}"></juicy-simple-visual-html-editor>
             </div>
         </div>
@@ -241,11 +241,11 @@ version: 0.0.0
                     });
                     this.refreshSelectors();
                     
-                    var that = this;   
+                    const that = this;   
 
-                    var panner = document.getElementById('panner');
-                    var leftPanel = document.getElementById('left-panel');
-                    var rightPanel = document.getElementById('right-panel');
+                    const panner = this.$.panner;
+                    const leftPanel = this.$.leftPanel;
+                    const rightPanel = this.$.rightPanel;
                     
                     panner.addEventListener('mousedown', function(ev) {
                         that.isMouseDown = true;
@@ -268,8 +268,8 @@ version: 0.0.0
                         
                         if(that.isMouseDown)
                         {
-                            var leftGrow = (ev.clientX - that.offsetLeft) / that.clientWidth; /* offsetWidth breaks with zooming */
-                            var rightGrow = 1 - leftGrow;
+                            const leftGrow = (ev.clientX - that.offsetLeft) / that.clientWidth; /* offsetWidth breaks with zooming */
+                            const rightGrow = 1 - leftGrow;
                             
                             leftPanel.style.flexGrow = leftGrow;
                             rightPanel.style.flexGrow = rightGrow;   
