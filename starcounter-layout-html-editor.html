@@ -74,7 +74,7 @@ version: 0.0.0
                 <juicy-ace-editor id="editor" style="height: 100%;" mode="ace/mode/html" readonly$="{{disabled}}" value="{{content}}" on-change="aceChanged" wrapmode="true"></juicy-ace-editor>
             </div>
             <div>
-                <juicy-simple-visual-html-editor disabled$="{{disabled}}" doc="{{partial.compositionElement.composition::change}}"></juicy-simple-visual-html-editor>
+                <juicy-simple-visual-html-editor id="wysiwyg" disabled$="{{disabled}}" doc="{{partial.compositionElement.composition::change}}"></juicy-simple-visual-html-editor>
             </div>
         </div>
         <div id="buttons">
@@ -150,6 +150,7 @@ version: 0.0.0
                 _selectorChanged: function(newVal, oldVal) {
                     this.partial = selectElementByString(newVal);
                     if (this.partial) {
+                        // console.log('_selectorChanged to smth', this.partial);
                         this.set('disabled', false);
                         this.$.highlightScopeSelected.show([this.parentElement, this.partial]);
                         this.composition = this.partial.compositionElement.shadowRoot || document.createDocumentFragment();
@@ -168,10 +169,13 @@ version: 0.0.0
                     // workaround Polymer's buggy dirty checking and
                     // appendChild(documentFragment)-like behavior of composition setter
                     var newComposition = this.partial.stringToDocumentFragment(event.target.value);
-                    this.notifyPath('partial.compositionElement.composition', newComposition);
                     this.partial.compositionElement.composition = newComposition;
+                    // please not that we cannot use newComposition,
+                    // as `juicy-composition.composition` setter changes the valut to new DocumentFragment`
+                    this.notifyPath('partial.compositionElement.composition', this.partial.compositionElement.composition);
                 },
                 _compositionChanged: function(newVal, oldVal, stopPropagation) {
+                    // console.log('_compositionChanged');
                     return;
                     this._compositionIsBeingSet = true;
                     if (this.partial && this.partial.compositionElement && this.disabled === false) {
