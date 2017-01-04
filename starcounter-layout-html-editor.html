@@ -167,8 +167,9 @@ version: 0.0.0
                     }
                     // workaround Polymer's buggy dirty checking and
                     // appendChild(documentFragment)-like behavior of composition setter
-                    this.notifyPath('partial.compositionElement.composition', this.partial.stringToDocumentFragment(event.target.value));
-                    this.partial.compositionElement.composition = this.partial.stringToDocumentFragment(event.target.value);
+                    var newComposition = this.partial.stringToDocumentFragment(event.target.value);
+                    this.notifyPath('partial.compositionElement.composition', newComposition);
+                    this.partial.compositionElement.composition = newComposition;
                 },
                 _compositionChanged: function(newVal, oldVal, stopPropagation) {
                     return;
