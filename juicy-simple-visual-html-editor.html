@@ -13,6 +13,9 @@ version: 0.0.0
 <dom-module id="juicy-simple-visual-html-editor">
     <template>
         <style>
+            :host{
+                min-height: 2em;
+           }
            juicy-dom-tree-view{
                 height: calc(100% - 35px);
                 overflow: auto;
@@ -153,7 +156,6 @@ version: 0.0.0
         (function() {
             Polymer({
                 is: 'juicy-simple-visual-html-editor',
-
                 properties: {
                     doc: {
                         type: Object,
@@ -183,7 +185,6 @@ version: 0.0.0
                     this.set('elements',[element]);
                     this.$.highlightElementSelected.show(element);
                 },
-
                 hideElements: function() {
                     if(!this.elements.length){
                         return;
@@ -230,17 +231,12 @@ version: 0.0.0
                     if(changed){
                         this.$.tree._docChanged(this.doc);
                         this.dispatchEvent(new CustomEvent('composition-changed'));
-
                     }
                 },
-
             });
-
             function elementHasStyle(element){
                 return element.style;
             }
-
-
         }());
     </script>
 </dom-module>

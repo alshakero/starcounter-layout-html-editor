@@ -119,7 +119,37 @@ version: 0.0.0
             };
             Polymer({
                 is: 'starcounter-layout-html-editor',
+                listeners: {
+                    'panner.mousedown': 'pannerOnMouseDown',
+                    'panner.dblclick': 'pannerDoubleClick'
+                },
+                pannerOnMouseDown: function() {
+                    this.isMouseDown = true;
+                },
+                windowMouseMove: function(ev) {
+                    if(this.isMouseDown)
+                    {
+                        const leftGrow = (ev.clientX - this.offsetLeft) / this.clientWidth; /* offsetWidth breaks with zooming */
+                        const rightGrow = 1 - leftGrow;
 
+                        this.$.leftPanel.style.flexGrow = leftGrow;
+                        this.$.rightPanel.style.flexGrow = rightGrow;
+
+                        /* collapse < 20% and > 80% */
+                        this.$.leftPanel.childNodes[1].style.display = leftGrow < 0.2 ? 'none' : ''; /* unset != '' */
+                        this.$.rightPanel.childNodes[1].style.display = leftGrow > 0.8 ? 'none' : '';
+                    }
+                },
+                windowMouseUp: function() {
+                    this.isMouseDown = false;
+                },
+                pannerDoubleClick: function() {
+                    this.$.leftPanel.style.flexGrow = 0.5;
+                    this.$.rightPanel.style.flexGrow = 0.5;
+
+                    this.$.leftPanel.childNodes[1].style.display = '';
+                    this.$.rightPanel.childNodes[1].style.display = '';
+                },
                 properties: {
                     selector: {
                         type: String,
@@ -241,45 +271,9 @@ version: 0.0.0
                         window.dispatchEvent(new Event('resize')); //fix resizing of ACE edior
                     });
                     this.refreshSelectors();
-                    
-                    const that = this;   
 
-                    const panner = this.$.panner;
-                    const leftPanel = this.$.leftPanel;
-                    const rightPanel = this.$.rightPanel;
-                    
-                    panner.addEventListener('mousedown', function(ev) {
-                        that.isMouseDown = true;
-                    });
-
-                    /* reset on double click */
-                    panner.addEventListener('dblclick', function(ev) {
-                        leftPanel.style.flexGrow = 0.5;
-                        rightPanel.style.flexGrow = 0.5;   
-                        
-                        leftPanel.childNodes[1].style.display = '';
-                        rightPanel.childNodes[1].style.display = '';
-                    });
-
-                    window.addEventListener('mouseup', function(ev) {
-                        that.isMouseDown = false;
-                    });
-
-                    window.addEventListener('mousemove', function(ev) {
-                        
-                        if(that.isMouseDown)
-                        {
-                            const leftGrow = (ev.clientX - that.offsetLeft) / that.clientWidth; /* offsetWidth breaks with zooming */
-                            const rightGrow = 1 - leftGrow;
-                            
-                            leftPanel.style.flexGrow = leftGrow;
-                            rightPanel.style.flexGrow = rightGrow;   
-                            
-                            /* collapse < 20% and > 80% */
-                            leftPanel.childNodes[1].style.display = leftGrow < 0.2 ? 'none' : ''; /* unset != '' */
-                            rightPanel.childNodes[1].style.display = leftGrow > 0.8 ? 'none' : '';
-                        }
-                    });
+                    window.addEventListener('mouseup', this.windowMouseUp.bind(this));
+                    window.addEventListener('mousemove', this.windowMouseMove.bind(this));
                 },
                 /**
                  * Refreshes the list of currently available partials to populate dropdown
