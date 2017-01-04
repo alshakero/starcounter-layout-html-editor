@@ -67,10 +67,20 @@ version: 0.0.0
             }
             #width-value:valid + #set-width-btn
             {
-               fill: #009029
+                fill: #009029;
+            }
+            [disabled] svg{
+                opacity: 0.5;
+            }
+            juicy-dom-tree-view{
+                --juicy-dom-tree-selected-background-color: rgba(30, 144, 255, 0.5);
+                border: none; /* override original css */
+                border-top: 1px solid #ccc;
+                flex: 1 0 1em;
+                overflow: auto;
             }
         </style>
-        <div class="toolkit-ui">
+        <div class="toolkit-ui" disabled$="{{!elements.length}}">
             <!-- for easier IntelliSense, everything is prefixed with btn -->
             <button title="Move selected node upword inside its parent node">
                 <svg x="0px" y="0px" width="16px" height="16px" viewBox="0 -20 300 400">
@@ -82,18 +92,25 @@ version: 0.0.0
                     <path d="M289 196c3 -4 3 -9 1 -13s-6 -7 -11 -7h-63v-167c0 -7 -5 -13 -12 -13h-116c-7 0 -13 6 -13 13v167h-62c-5 0 -10 3 -12 7s-2 9 1 13l133 187c2 3 6 5 10 5v0c4 0 9 -2 11 -5z"></path>
                 </svg>
             </button>
-            <button title="Jump selected node upword to outsite its parent node">
+            <button id="btn-move-outside" title="Jump selected node upword to outsite its parent node" on-click="moveElementsOut">
                 <svg x="0px" y="0px" width="16px" height="16px" viewBox="0 -20 300 400">
                     <path d="M192 335c4 3 9 3 13 1s7 -6 7 -11v-62h168c7 0 13 -6 13 -13v-116c0 -7 -6 -13 -13 -13h-168v-62c0 -5 -3 -9 -7 -11s-9 -2 -13 1l-187 132c-3 2 -5 7 -5 11v0c0 4 2 8 5 10z"></path>
                 </svg>
             </button>
-            <button title="Hide node" on-click="hideElements">
-                <svg x="0px" y="0px" width="16px" height="16px" viewBox="0 -20 300 400">
-                    <path d="M359 204c4 -2 6 -6 6 -11c0 -4 -2 -8 -4 -10v0v0l-1 -1l-79 -79v0c-24 -27 -60 -44 -99 -44c-35 0 -66 14 -90 36v-1l-87 87c-3 3 -5 7 -5 11c0 3 1 7 3 9v0l80 79c24 27 60 45 99 45c35 0 67 -14 91 -36v1zM182 102c50 0 90 40 90 90s-40 90 -90 90s-90 -40 -90 -90 s40 -90 90 -90zM139 192c0 29 14 43 43 43s44 -14 44 -43s-15 -44 -44 -44s-43 15 -43 44z"></path>
-                    <line stroke-width="50" x1="300" y1="0" x2="60" y2="350"/>
+            <button id="btn-show-hide"
+              title="Hide node"
+              on-click="hideElements"
+              disabled$="{{!stylableElements(elements)}}">
+                <svg x="0px" y="0px" width="16px" height="16px" viewBox="0 0 71.77 41.87">
+                    <title>Crossed eye icon</title>
+                    <path d="M67.32,19.25l1.13,1.68L67.32,22.6c-7,10.45-16.69,17.14-27.22,18.84a32.75,32.75,0,0,1-5.3.43,35.1,35.1,0,0,1-19-5.7l6.34-3.3a28.27,28.27,0,0,0,17,2.65c8.31-1.34,16.07-6.5,22-14.59a43.53,43.53,0,0,0-5-5.72l5.57-2.9A50.72,50.72,0,0,1,67.32,19.25Z"/><path class="cls-1" d="M54.27,6.05L48,9.31a28.43,28.43,0,0,0-17.57-3C22.1,7.66,14.36,12.82,8.48,20.93a42.16,42.16,0,0,0,5.38,6.13L8.26,30a50.11,50.11,0,0,1-5.93-7.39l-1.1-1.65,1.1-1.66C9.27,8.79,18.92,2.09,29.49.41A34.84,34.84,0,0,1,54.27,6.05Z"/><path class="cls-1" d="M47.75,19.58A13.37,13.37,0,0,1,47.83,21a13,13,0,0,1-21.59,9.76l6.16-3.2a6.84,6.84,0,0,0,2.43.44,7,7,0,0,0,6.77-5.22Z"/><path class="cls-1" d="M43.72,11.54l-6,3.1a7,7,0,0,0-9.79,5.09l-6,3.11A11.32,11.32,0,0,1,21.83,21,13,13,0,0,1,43.72,11.54Z"/>
+                    <rect class="cls-1" x="-3" y="17.78" width="77.77" height="6" transform="translate(-5.54 18.89) rotate(-27.47)"/>
                 </svg>
             </button>
-            <button title="Show node" on-click="showElements">
+            <button id="btn-show-hide"
+              title="Show node"
+              on-click="showElements"
+              disabled$="{{!stylableElements(elements)}}">
                 <svg x="0px" y="0px" width="16px" height="16px" viewBox="0 -20 300 400">
                     <path d="M359 204c4 -2 6 -6 6 -11c0 -4 -2 -8 -4 -10v0v0l-1 -1l-79 -79v0c-24 -27 -60 -44 -99 -44c-35 0 -66 14 -90 36v-1l-87 87c-3 3 -5 7 -5 11c0 3 1 7 3 9v0l80 79c24 27 60 45 99 45c35 0 67 -14 91 -36v1zM182 102c50 0 90 40 90 90s-40 90 -90 90s-90 -40 -90 -90 s40 -90 90 -90zM139 192c0 29 14 43 43 43s44 -14 44 -43s-15 -44 -44 -44s-43 15 -43 44z"></path>
                 </svg>
@@ -105,7 +122,7 @@ version: 0.0.0
             </button>
             <button title="Delete selected node">
                 <svg x="0px" y="0px" width="16px" height="16px" viewBox="0 0 300 400">
-                    <rect x="0" y="150" width="300" height="100">
+                    <rect x="0" y="150" width="300" height="100"/>
                 </svg>
             </button>
             <span id="resize-area">
@@ -145,9 +162,12 @@ version: 0.0.0
                     disabled: {
                         type: Boolean,
                         value: true
+                    },
+                    elements: {
+                        type: Array,
+                        value: function(){return [];}
                     }
                 },
-
                 //todo move it to another custom element
                 selectedElementChanged: function(event) {
                     var element = event.detail.value;
@@ -159,58 +179,69 @@ version: 0.0.0
                             element = element.assignedNodes();
                             break;
                     }
-                    this.elements = [element];
+                    // this.elements = [element];
+                    this.set('elements',[element]);
                     this.$.highlightElementSelected.show(element);
                 },
 
-                observers: [
-                    'compositionHTMLChanged(partial.compositionElement.shadowRoot.innerHTML)'
-                ],
-                // Each method referenced in observers must be defined in
-                // element prototype. The argument to the method is the new value
-                // of the sub-property.
-                compositionHTMLChanged: function(html) {
-                    console.log('partial..innerHTML changed' + html);
-                    this._compositionIsBeingSet = true;
-                    this.content = html || '';
-                    this._compositionIsBeingSet = false;
-                },
-                _compositionIsBeingSet: false,
-                _compositionChanged: function(newVal, oldVal, stopPropagation) {
-                    return;
-                    this._compositionIsBeingSet = true;
-                    if (this.partial && this.partial.compositionElement && this.disabled === false) {
-                        // stop observing mutations
-                        this.observer.disconnect();
-                        this.partial.compositionElement.composition = newVal;
-                        if (!stopPropagation) {
-                            this.$.editor.value = this.partial.compositionElement.composition.innerHTML || '';
-                        }
-
-                        // start observing mutations if needed
-                        this._updateObserver();
-                    }
-                    this._compositionIsBeingSet = false;
-                },
-
                 hideElements: function() {
+                    if(!this.elements.length){
+                        return;
+                    }
                     for (var elementNo = 0, len = this.elements.length; elementNo < len; elementNo++) {
                         let element = this.elements[elementNo];
-                        element.dataset.originalDisplay = element.style.display;
-                        element.style.display = 'none';
+                        if(element.style && element.style.display !== 'none'){
+                            element.dataset.originalDisplay = element.style.display;
+                            element.style.display = 'none';
+                        }
                     }
                 },
                 showElements: function() {
+                    if(!this.elements.length){
+                        return;
+                    }
                     for (var elementNo = 0, len = this.elements.length; elementNo < len; elementNo++) {
                         let element = this.elements[elementNo];
-                        element.dataset.originalDisplay = element.style.display;
-                        element.style.display = 'none';
+                        if(element.style){
+                            if(typeof element.dataset.originalDisplay !== 'undefined'){
+                                element.style.display = element.dataset.originalDisplay;
+                                element.dataset.originalDisplay = undefined;
+                            } else {
+                                element.style.display = 'unset';
+                            }
+                        }
                     }
-                }
+                },
+                stylableElements: function(elements){
+                    return elements && elements.filter(elementHasStyle).length;
+                },
+                moveElementsOut: function() {
+                    if(!this.elements.length){
+                        return;
+                    }
+                    let changed = false;
+                    for (var elementNo = 0, len = this.elements.length; elementNo < len; elementNo++) {
+                        let element = this.elements[elementNo];
+                        if(element.parentElement){
+                            element.parentElement.parentNode.insertBefore(element, element.parentNode);
+                            changed = true;
+                        }
+                    }
+                    if(changed){
+                        this.$.tree._docChanged(this.doc);
+                        this.dispatchEvent(new CustomEvent('composition-changed'));
+
+                    }
+                },
 
             });
+
+            function elementHasStyle(element){
+                return element.style;
+            }
 
 
         }());
     </script>
 </dom-module>
+ 
