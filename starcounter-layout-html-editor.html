@@ -315,7 +315,7 @@ version: 0.0.0
                     if (!this.partial) {
                         return false;
                     }
-                    return this.partial.compositionElement.composition = this.partial.storedLayout;
+                    return this.partial.compositionElement.composition = this.partial.storedLayout || this.partial.defaultComposition;
                     // return this.set('content', this.partial.storedLayout);
 
                 }
