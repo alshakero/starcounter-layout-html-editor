@@ -14,7 +14,7 @@ version: 0.0.0
 <!-- Defines element markup -->
 <dom-module id="starcounter-layout-html-editor">
     <template>
-        <style>
+         <style>
             :host{
                 display: flex;
                 resize: both;
@@ -86,7 +86,7 @@ version: 0.0.0
                     <!--  Polymer 1.x notification protocoll is too buggy to handle composed two way data binding-->
                     <!-- doc="{{partial.compositionElement.composition::composition-changed}}" -->
             </div>
-        </div>
+            </div>
         <div id="buttons">
             <button on-click="revert" disabled$="{{disabled}}">Cancel</button>
             <button on-click="restore" disabled$="{{disabled}}">Restore default</button>
@@ -315,7 +315,7 @@ version: 0.0.0
                     if (!this.partial) {
                         return false;
                     }
-                    return this.partial.compositionElement.composition = this.partial.storedLayout || this.partial.defaultComposition;
+                    return this.partial.compositionElement.composition = this.partial.storedLayout || this.partial.defaultComposition
                     // return this.set('content', this.partial.storedLayout);
 
                 }
