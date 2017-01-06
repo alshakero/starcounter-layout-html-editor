@@ -50,7 +50,7 @@
         <section>
             <h2>Partials structure</h2>
             <pre><code>&lt;starcounter-include&gt;
-    Some
+    &lt;p&gt;Some&lt;/p&gt;
     &lt;span&gt;Content&lt;/span&gt;
     &lt;div slot="defined-slot-name"&gt;
         with
@@ -72,7 +72,9 @@
             var script = document._currentScript || document.currentScript;
             var template = script.previousElementSibling;
             template.partial = {
-                Html: `Some
+                // inline elements are not well covered due to https://github.com/Juicy/juicy-composition/issues/4
+                // play with them once fixed
+                Html: `<p>Some</p>
                 <span>Content</span>
                 <div slot="defined-slot-name">
                     with
@@ -94,6 +96,7 @@
                 }
                 // refresh the suggested partials dropdown
                 document.querySelector('starcounter-layout-html-editor').refreshSelectors();
+                window.editor = document.querySelector('starcounter-layout-html-editor');
             });
         </script>
     </section>

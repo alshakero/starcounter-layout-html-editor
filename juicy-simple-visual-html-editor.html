@@ -151,7 +151,7 @@ version: 0.0.0
                 properties: {
                     doc: {
                         type: Object,
-                        // observer: '_docChanged'
+                        observer: 'docMutated'
                     },
                     disabled: {
                         type: Boolean,
@@ -176,9 +176,15 @@ version: 0.0.0
                     // this.elements = [element];
                     this.set('elements',[element]);
                     this.$.highlightElementSelected.show(element);
+                    // this.$.highlightShadowElementSelected.show(element);
+                },
+                docMutated: function(mutations){
+                    // console.log('docMutated');
+                    this.$.tree._docChanged(this.doc)
                 },
 
                 hideElements: function() {
+                    let changed = false;
                     if(!this.elements.length){
                         return;
                     }
@@ -189,22 +195,26 @@ version: 0.0.0
                             element.style.display = 'none';
                         }
                     }
+                    changed && fireChangeEvent(this, 'hideElements', this.elements);
                 },
                 showElements: function() {
+                    let changed = false;
                     if(!this.elements.length){
                         return;
                     }
                     for (var elementNo = 0, len = this.elements.length; elementNo < len; elementNo++) {
                         let element = this.elements[elementNo];
                         if(element.style){
+                            changed = true;
                             if(typeof element.dataset.originalDisplay !== 'undefined'){
                                 element.style.display = element.dataset.originalDisplay;
-                                element.dataset.originalDisplay = undefined;
+                                delete element.dataset.originalDisplay;
                             } else {
                                 element.style.display = 'unset';
                             }
                         }
                     }
+                    changed && fireChangeEvent(this, 'showElements', this.elements);
                 },
                 stylableElements: function(elements){
                     return elements && elements.filter(elementHasStyle).length;
@@ -222,9 +232,8 @@ version: 0.0.0
                         }
                     }
                     if(changed){
-                        this.$.tree._docChanged(this.doc);
-                        this.dispatchEvent(new CustomEvent('composition-changed'));
-
+                        // this.$.tree._docChanged(this.doc);
+                        fireChangeEvent(this, 'moveElementsOut', this.elements);
                     }
                 },
 
@@ -232,6 +241,21 @@ version: 0.0.0
 
             function elementHasStyle(element){
                 return element.style;
+            }
+
+            /**
+             * Helper to dispatch events
+             * @param  {Element} root     element on which event will be dispatched
+             * @param  {String} type      sub-type of `composition-changed` event
+             * @param  {Any} elements elements detail
+             */
+            function fireChangeEvent(root, type, elements){
+                root.dispatchEvent(new CustomEvent('composition-changed', {
+                    detail:{
+                        type: type,
+                        elements: elements
+                    }
+                }));
             }
 
 

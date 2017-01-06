@@ -71,10 +71,20 @@ version: 0.0.0
         <!-- <code>{{selector}}</code> -->
         <div id="editor-area">
             <div>
-                <juicy-ace-editor id="editor" style="height: 100%;" mode="ace/mode/html" readonly$="{{disabled}}" value="{{content}}" on-change="aceChanged" wrapmode="true"></juicy-ace-editor>
+                <juicy-ace-editor id="ace"
+                    style="height: 100%;"
+                    mode="ace/mode/html"
+                    readonly$="{{disabled}}"
+                    wrapmode="true"></juicy-ace-editor>
+                    <!--  Polymer 1.x notification protocoll is too buggy to handle composed two way data binding-->
+                    <!-- value="{{stringify(partial.compositionElement.composition)}}" -->
             </div>
             <div>
-                <juicy-simple-visual-html-editor id="wysiwyg" disabled$="{{disabled}}" doc="{{partial.compositionElement.composition::change}}"></juicy-simple-visual-html-editor>
+                <juicy-simple-visual-html-editor id="wysiwyg"
+                    disabled$="{{disabled}}"
+                    on-composition-changed="wysiwygMadeAChange"></juicy-simple-visual-html-editor>
+                    <!--  Polymer 1.x notification protocoll is too buggy to handle composed two way data binding-->
+                    <!-- doc="{{partial.compositionElement.composition::composition-changed}}" -->
             </div>
         </div>
         <div id="buttons">
@@ -108,10 +118,6 @@ version: 0.0.0
                         type: Boolean,
                         value: true
                     },
-                    composition: {
-                        type: Object,
-                        observer: '_compositionChanged'
-                    },
                     knownSelectors: {
                         type: Array,
                         value: []
@@ -130,22 +136,17 @@ version: 0.0.0
                     observeMutations: {
                         type: Boolean,
                         observer: '_updateObserver',
-                        value: false
+                        // value: false
+                        value: true
                     }
                 },
-
-                observers: [
-                    'compositionHTMLChanged(partial.compositionElement.shadowRoot.innerHTML)'
-                ],
-                // Each method referenced in observers must be defined in
-                // element prototype. The argument to the method is the new value
-                // of the sub-property.
-                compositionHTMLChanged: function(html) {
-                    console.log('partial..innerHTML changed' + html);
-                    this._compositionIsBeingSet = true;
-                    this.content = html || '';
-                    this._compositionIsBeingSet = false;
+                listeners:{
+                    'ace.blur':     'aceBlured',
+                    'ace.change':   'aceChanged',
+                    'ace.focusin':    'aceFocused'
                 },
+                observers: [
+                ],
                 _compositionIsBeingSet: false,
                 _selectorChanged: function(newVal, oldVal) {
                     this.partial = selectElementByString(newVal);
@@ -153,26 +154,58 @@ version: 0.0.0
                         // console.log('_selectorChanged to smth', this.partial);
                         this.set('disabled', false);
                         this.$.highlightScopeSelected.show([this.parentElement, this.partial]);
-                        this.composition = this.partial.compositionElement.shadowRoot || document.createDocumentFragment();
+
+                        // if there is no composition yet, populate it and editor with defaults for ''
+                        if(this.partial.compositionElement.composition === null){
+                            console.info('starcounter-layout-html-editor is setting empty compostion, to edit all slots.');
+                            this.partial.compositionElement.composition = document.createDocumentFragment();
+                        }
+                        this._compositionIsBeingSet = true;
+                        this.$.ace.value = this.partial.compositionElement.shadowRoot.innerHTML || '';
+                        this._compositionIsBeingSet = false;
+                        // debugger
+                        this.$.wysiwyg.doc = this.partial.compositionElement.composition;
                     } else {
                         this.set('disabled', true);
                         this.$.highlightScopeSelected.hide();
-                        this.composition = null;
                     }
                     this._updateObserver();
                 },
-                aceChanged: function(event, oldVal) {
-                    // Prevent looping by Polymer's notification protocol
+                aceFocused: function(){
+                    // console.log('aceFocused');
+                    // set flag, so mutation observer will not
+                    // reset ace editor with it's own change
+                    this.aceBeingChanged = true;
+                },
+                aceBlured: function(){
+                    // console.log('aceBlured');
+                    // reset flag, mutation observer notify ace editor
+                    // about external changes
+                    this.aceBeingChanged = false;
+                },
+                /**
+                 * Called after juicy-ace-editor change
+                 * Parses editors value to document fragment and
+                 * sets composition
+                 * @param  {Event} event  juicy-ace-editor change event
+                 */
+                aceChanged: function(event) {
+                    // Prevent infinite looping,
+                    // for event change being called after changin by ourselves
                     if (this._compositionIsBeingSet) {
                         return;
                     }
-                    // workaround Polymer's buggy dirty checking and
-                    // appendChild(documentFragment)-like behavior of composition setter
-                    var newComposition = this.partial.stringToDocumentFragment(event.target.value);
+                    // console.log('aceChanged', event.target.value)
+                    // workaround appendChild(documentFragment)-like behavior
+                    // of composition setter
+                    let newComposition = this.partial.stringToDocumentFragment(event.target.value);
                     this.partial.compositionElement.composition = newComposition;
-                    // please not that we cannot use newComposition,
-                    // as `juicy-composition.composition` setter changes the valut to new DocumentFragment`
-                    this.notifyPath('partial.compositionElement.composition', this.partial.compositionElement.composition);
+                    // please note that we cannot use newComposition any longer,
+                    // as it was empited by appending to SD
+                },
+                wysiwygMadeAChange: function(){
+                    // console.log('wysiwygMadeAChange', arguments);
+                    // this.compositionHTMLChanged(this.partial.compositionElement.composition)
                 },
                 _compositionChanged: function(newVal, oldVal, stopPropagation) {
                     // console.log('_compositionChanged');
@@ -183,7 +216,7 @@ version: 0.0.0
                         this.observer.disconnect();
                         this.partial.compositionElement.composition = newVal;
                         if (!stopPropagation) {
-                            this.$.editor.value = this.partial.compositionElement.composition.innerHTML || '';
+                            this.$.ace.value = this.partial.compositionElement.composition.innerHTML || '';
                         }
 
                         // start observing mutations if needed
@@ -207,14 +240,26 @@ version: 0.0.0
 
                 },
                 /**
-                 * Creates an observer for external changes made to composition, to notify the editor
+                 * Creates an observer for external changes made to composition, to notify the editors
                  */
                 created: function () {
                     const editor = this;
                     // create an observer
                     this.observer = new MutationObserver(function shadowDOMChanged(mutations){
-                        // notify Polymer's data binding
-                        editor.set('content', editor.partial.compositionElement.shadowRoot && editor.partial.compositionElement.shadowRoot.innerHTML || '')
+                        // console.log('mutation');
+                        // Prevent infinite looping
+                        if (editor._compositionIsBeingSet) {
+                            // console.log('disregared mutation');
+                            return;
+                        }
+                        editor._compositionIsBeingSet = true;
+                        // notify juicy-ace-editor, unless it's the one making it
+                        if(!editor.aceBeingChanged){
+                            editor.$.ace.value = editor.partial.compositionElement.shadowRoot && editor.partial.compositionElement.shadowRoot.innerHTML || '';
+                        }
+                        // notify wysiwyg-editor's document, even about its own change
+                        editor.$.wysiwyg.docMutated(mutations);
+                        editor._compositionIsBeingSet = false;
                     });
                 },
 
@@ -247,16 +292,6 @@ version: 0.0.0
                     return this;
                 },
 
-                // Fires when the element was inserted into the document
-                attached: function() {},
-
-                // Fires when the element was removed from the document
-                detached: function() {},
-
-                // Fires when an attribute was added, removed, or updated
-                attributeChanged: function(name, type) {},
-
-
                 /**
                  * Saves given or current layout as stored one, (TODO:) notifies binding about it.
                  * @param  {String} [layoutStr] layout to be saved, if not given current one will be used
@@ -272,14 +307,16 @@ version: 0.0.0
                     // TODO: move editing features from partial to here
                     this.partial._forceLayoutChange = true;
                     this.partial._compositionChanged("");
-                    return this.set('content', this.partial.compositionElement.shadowRoot && this.partial.compositionElement.shadowRoot.innerHTML || '');
+                    return this.partial.compositionElement.shadowRoot;
+                    // return this.set('content', this.partial.compositionElement.shadowRoot && this.partial.compositionElement.shadowRoot.innerHTML || '');
 
                 },
                 revert: function() {
                     if (!this.partial) {
                         return false;
                     }
-                    return this.set('content', this.partial.storedLayout);
+                    return this.partial.compositionElement.composition = this.partial.storedLayout;
+                    // return this.set('content', this.partial.storedLayout);
 
                 }
             });
