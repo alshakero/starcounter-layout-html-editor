@@ -162,7 +162,7 @@ version: 0.0.0
                         placeholder="0"
                         min="0" max="100"
                         id="width-value"
-                        value="{{elementWidth}}"
+                        value="{{elementWidth::input}}"
                         disabled$="{{hasStylableElements}}">%
                     <!-- use this button events to save width -->
                     <button id="set-width-btn"
@@ -224,6 +224,7 @@ version: 0.0.0
                 ],
                 selectedElementsAddedOrRemoved: function(changeRecord) {
                     if (changeRecord) {
+                        this.set('elementWidth', this.selectedElements[0] && this.selectedElements[0].style && parseInt(this.selectedElements[0].style.width) || 100);
                         this.$.highlightElementsSelected.show(visualElements(this.selectedElements));
                     }
                 },
