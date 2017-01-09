@@ -37,12 +37,14 @@ version: 0.0.0
                 opacity: 0.35;
             }
             #editor-area{
-                height: 5em;
-                flex: 1 0 5em;
+                /*height: 7em;*/
+                flex: 1 0 8em;
                 display: flex;
             }
             #editor-area > *{
-                flex: 1 0 5em;
+                /*height: 7em;*/
+                min-width: 10em;
+                flex: 1 1 10em;
 
                 box-shadow: 0 0  5px grey;
                 margin: 5px;
@@ -50,6 +52,19 @@ version: 0.0.0
             }
             #editor-area >[disabled]{
                 opacity: 0.35;
+            }
+            #coders-pane{
+                display: flex;
+                flex-direction: column;
+            }
+            juicy-ace-editor{
+                flex: 1 0 5em;
+                /*height: 100%*/
+            }
+            #slot-hint{
+                font-size: 75%;
+                line-height: 1.4em;
+                margin: 0.2em;
             }
             juicy-simple-visual-html-editor{
                 height: 100%;
@@ -59,7 +74,7 @@ version: 0.0.0
             <input
                 list="selector-autocomplete"
                 type="text"
-                placeholder="css selector for partial to edit"
+                placeholder="Click here to pick the part of a screen that you want to edit"
                 value="{{selector::input}}"/>
             <datalist id="selector-autocomplete">
                 <template is="dom-repeat" items="{{knownSelectors}}">
@@ -70,14 +85,18 @@ version: 0.0.0
         <juicy-highlight id="highlightScopeSelected" strokewidth="1" strokecolor="#C0C0C0" strokeoffset="2" overlay></juicy-highlight>
         <!-- <code>{{selector}}</code> -->
         <div id="editor-area">
-            <div>
+            <div id="coders-pane">
                 <juicy-ace-editor id="ace"
-                    style="height: 100%;"
                     mode="ace/mode/html"
                     readonly$="{{disabled}}"
                     wrapmode="true"></juicy-ace-editor>
                     <!--  Polymer 1.x notification protocoll is too buggy to handle composed two way data binding-->
                     <!-- value="{{stringify(partial.compositionElement.composition)}}" -->
+
+                <aside id="slot-hint">
+                    In V0 to distribute the content use
+                    <code>&lt;content select="[slot='<em>id</em>']"&gt;&lt;/content&gt;</code> where <code><em>id</em></code> is the index or the name given custom slot name
+                </aside>
             </div>
             <div>
                 <juicy-simple-visual-html-editor id="wysiwyg"
@@ -91,11 +110,8 @@ version: 0.0.0
             <button on-click="revert" disabled$="{{disabled}}">Cancel</button>
             <button on-click="restore" disabled$="{{disabled}}">Restore default</button>
             <button on-click="save" disabled$="{{disabled}}">Save</button>
-            <label><input type="checkbox" checked="{{observeMutations::change}}" disabled$="{{disabled}}"/>Observe Shadow DOM mutations / I'll use browser's dev tools</label>
+            <!-- <label><input type="checkbox" checked="{{observeMutations::change}}" disabled$="{{disabled}}"/>Observe Shadow DOM mutations / I'll use browser's dev tools</label> -->
         </div>
-        <p>
-            To distribute the content use
-        <code>&lt;content select="[slot='<em>id</em>']"&gt;&lt;/content&gt;</code> where <code><em>id</em></code> is the index or given custom slot id</p>
     </template>
 
     <script>
