@@ -40,7 +40,6 @@ version: 0.0.0
                 /*height: 7em;*/
                 flex: 1 0 8em;
                 display: flex;
-
                 /* from http://stackoverflow.com/a/4407335/1247990 */
                 -webkit-touch-callout: none; /* iOS Safari */
                 -webkit-user-select: none; 
@@ -119,12 +118,12 @@ version: 0.0.0
             {
                 height: 100%;
             }
-            div[collapsed="true"] svg
+            div[data-collapsed="true"] svg
             {
                 transform: rotate(180deg);
             }
             /* if both are collapsed, we don't need to rotate the tree's button */
-            #coders-pane[collapsed="true"] ~ #tree-view[collapsed="true"] svg
+            #coders-pane[data-collapsed="true"] ~ #tree-view[data-collapsed="true"] svg
             {
                 transform: rotate(0deg)!important;
             }
@@ -194,7 +193,7 @@ version: 0.0.0
                     <!-- doc="{{partial.compositionElement.composition::composition-changed}}" -->
                     
             </div>
-            </div>
+        </div>
         <div id="buttons">
             <button on-click="revert" disabled$="{{disabled}}">Cancel</button>
             <button on-click="restore" disabled$="{{disabled}}">Restore default</button>
