@@ -19,14 +19,8 @@ version: 0.0.0
                 display: flex;
                 resize: both;
                 overflow: auto;
-                min-height: 300px;
+
                 flex-direction: column;
-                -webkit-touch-callout: none; /* iOS Safari */
-                -webkit-user-select: none; /* Chrome/Safari/Opera */
-                -khtml-user-select: none; /* Konqueror */
-                -moz-user-select: none; /* Firefox */
-                -ms-user-select: none; /* Internet Explorer/Edge */
-                user-select: none; /* Non-prefixed version, currently not supported by any browser */
             }
             .partial-picker{
                 width: 100%;
@@ -35,7 +29,6 @@ version: 0.0.0
             .partial-picker > input{
                 flex: 1;
                 min-width: 80%;
-                padding: 5px;
             }
             #editor{
                 height: 100%;
@@ -44,41 +37,112 @@ version: 0.0.0
                 opacity: 0.35;
             }
             #editor-area{
-                height: 5em;
-                flex: 1 0 5em;
+                /*height: 7em;*/
+                flex: 1 0 8em;
                 display: flex;
+
+                /* from http://stackoverflow.com/a/4407335/1247990 */
+                -webkit-touch-callout: none; /* iOS Safari */
+                -webkit-user-select: none; 
+                -khtml-user-select: none; 
+                -moz-user-select: none; 
+                -ms-user-select: none;
+                user-select: none; 
             }
-            #editor-area > *{
-                flex-grow: 0.5;
-                flex-shrink: 0;
-                flex-basis: 5px;
-                border: 1px solid #ddd;
+            #coders-pane, #tree-view{
+                /* height: 7em; */
+                min-width: 2em;
+                flex: 2 0 0em; /* for dragging to work well with flex-grow */
+                box-shadow: 0 0 5px grey;
+                margin: 5px;
                 overflow:auto;
+                position: relative; /* for collapse buttons z-index to work */
+                display: flex;
+                flex-direction: column;
             }
             #editor-area >[disabled]{
                 opacity: 0.35;
             }
-            juicy-dom-tree-view{
-                --juicy-dom-tree-selected-background-color: rgba(30, 144, 255, 0.5);
+            juicy-ace-editor{
+                flex: 1 0 5em;
+                /*height: 100%*/
+                z-index: 1;
+            }
+            #slot-hint{
+                font-size: 75%;
+                line-height: 1.4em;
+                margin: 0.2em;
+            }
+            juicy-simple-visual-html-editor{
+                height: 100%;
             }
             #panner
             {
-                flex: 0 0 10px!important;
-                cursor: ew-resize;
-                background: repeating-linear-gradient(
-                45deg,
-                #ccc,
-                #ccc 10px,
-                #eee 10px,
-                #eee 20px
-                );
+                flex: 0 0 0.6em!important;
+                margin: 0.3em 0em;
+                background: grey;
+                cursor: col-resize;
+                display: flex;
+                align-items: center;
+            }
+            .pane-collapse:hover
+            {
+                opacity: 1;
+            }
+            .pane-collapse
+            {
+                height: 2em;                
+                align-self: flex-end;
+                margin-top: 1.2em;
+                margin-bottom: -3.2em;
+                z-index: 2;
+                cursor: pointer;
+                opacity: 0.3;
+            }
+            .pane-collapse button.active svg
+            {
+                transform: rotate(180deg);
+            }
+            .pane-collapse button
+            {
+                background: rgba(0,0,0,0.2);
+                -webkit-border-top-left-radius: 5px;
+                -webkit-border-bottom-left-radius: 5px;
+                -moz-border-radius-topleft: 5px;
+                -moz-border-radius-bottomleft: 5px;
+                border-top-left-radius: 5px;
+                border-bottom-left-radius: 5px;
+                border: none;
+                padding: 0.4em;
+            }
+            #coders-hidable-part
+            {
+                height: 100%;
+            }
+            div[collapsed="true"] svg
+            {
+                transform: rotate(180deg);
+            }
+            /* if both are collapsed, we don't need to rotate the tree's button */
+            #coders-pane[collapsed="true"] ~ #tree-view[collapsed="true"] svg
+            {
+                transform: rotate(0deg)!important;
+            }
+            /* 
+                SVGs inside buttons are sometimes
+                passed as on-click event targets,
+                this fixes the issue and returns
+                the button itself.
+            */
+            button svg {
+                pointer-events: none;
             }
         </style>
         <label class="partial-picker">
             <input
                 list="selector-autocomplete"
                 type="text"
-                placeholder="css selector for partial to edit"
+                placeholder="Click here to pick the part of a screen that you want to edit"
                 value="{{selector::input}}"/>
             <datalist id="selector-autocomplete">
                 <template is="dom-repeat" items="{{knownSelectors}}">
@@ -89,24 +153,54 @@ version: 0.0.0
         <juicy-highlight id="highlightScopeSelected" strokewidth="1" strokecolor="#C0C0C0" strokeoffset="2" overlay></juicy-highlight>
         <!-- <code>{{selector}}</code> -->
         <div id="editor-area">
-            <div id="leftPanel">
-                <juicy-ace-editor id="editor" mode="ace/mode/html" readonly$="{{disabled}}" value="{{content}}" on-change="aceChanged" wrapmode="true"></juicy-ace-editor>
+            <div id="coders-pane">
+                <div class="pane-collapse"> 
+                    <button id="btn-left-collapse" on-click="collapseButtonClicked">
+                        <svg width="15" height="15" viewport="0 0 15 15">
+                            <polygon points="15,0 15,15 0,7" fill="#333" />
+                        </svg>
+                    </button>
+                </div>
+                <juicy-ace-editor id="ace"
+                    mode="ace/mode/html"
+                    readonly$="{{disabled}}"
+                    wrapmode="true"></juicy-ace-editor>
+                    <!--  Polymer 1.x notification protocoll is too buggy to handle composed two way data binding-->
+                    <!-- value="{{stringify(partial.compositionElement.composition)}}" -->
+
+                <aside id="slot-hint">
+                    In V0 to distribute the content use
+                    <code>&lt;content select="[slot='<em>id</em>']"&gt;&lt;/content&gt;</code> where <code><em>id</em></code> is the index or the name given custom slot name
+                </aside>       
             </div>
             <div id="panner" title="Drag to pan, double click to reset">
+                <svg width="10"" height="20"" viewport="0 0 10 20">
+                    <line x1="3" x2="3" y1="0" y2="20" stroke-width="1" stroke="#fff" />
+                    <line x1="7" x2="7" y1="0" y2="20" stroke-width="1" stroke="#fff" />
+                </svg>
             </div>
-            <div id="rightPanel">
-                <juicy-simple-visual-html-editor disabled$="{{disabled}}" doc="{{partial.compositionElement.composition::change}}"></juicy-simple-visual-html-editor>
+            <div id="tree-view">
+                <div class="pane-collapse"> 
+                    <button id="btn-right-collapse" on-click="collapseButtonClicked">
+                        <svg width="15" height="15" viewport="0 0 15 15">
+                            <polygon points="0,0 15,7 0,15" fill="#333" />
+                        </svg>
+                    </button>
+                </div>
+                <juicy-simple-visual-html-editor id="wysiwyg"
+                    disabled$="{{disabled}}"
+                    on-composition-changed="wysiwygMadeAChange"></juicy-simple-visual-html-editor>
+                    <!--  Polymer 1.x notification protocoll is too buggy to handle composed two way data binding-->
+                    <!-- doc="{{partial.compositionElement.composition::composition-changed}}" -->
+                    
             </div>
-        </div>
+            </div>
         <div id="buttons">
             <button on-click="revert" disabled$="{{disabled}}">Cancel</button>
             <button on-click="restore" disabled$="{{disabled}}">Restore default</button>
             <button on-click="save" disabled$="{{disabled}}">Save</button>
-            <label><input type="checkbox" checked="{{observeMutations::change}}" disabled$="{{disabled}}"/>Observe Shadow DOM mutations / I'll use browser's dev tools</label>
+            <!-- <label><input type="checkbox" checked="{{observeMutations::change}}" disabled$="{{disabled}}"/>Observe Shadow DOM mutations / I'll use browser's dev tools</label> -->
         </div>
-        <p>
-            To distribute the content use
-        <code>&lt;content select="[slot='<em>id</em>']"&gt;&lt;/content&gt;</code> where <code><em>id</em></code> is the index or given custom slot id</p>
     </template>
 
     <script>
@@ -119,37 +213,7 @@ version: 0.0.0
             };
             Polymer({
                 is: 'starcounter-layout-html-editor',
-                listeners: {
-                    'panner.mousedown': 'pannerOnMouseDown',
-                    'panner.dblclick': 'pannerDoubleClick'
-                },
-                pannerOnMouseDown: function() {
-                    this.isMouseDown = true;
-                },
-                windowMouseMove: function(ev) {
-                    if(this.isMouseDown)
-                    {
-                        const leftGrow = (ev.clientX - this.offsetLeft) / this.clientWidth; /* offsetWidth breaks with zooming */
-                        const rightGrow = 1 - leftGrow;
 
-                        this.$.leftPanel.style.flexGrow = leftGrow;
-                        this.$.rightPanel.style.flexGrow = rightGrow;
-
-                        /* collapse < 20% and > 80% */
-                        this.$.leftPanel.childNodes[1].style.display = leftGrow < 0.2 ? 'none' : ''; /* unset != '' */
-                        this.$.rightPanel.childNodes[1].style.display = leftGrow > 0.8 ? 'none' : '';
-                    }
-                },
-                windowMouseUp: function() {
-                    this.isMouseDown = false;
-                },
-                pannerDoubleClick: function() {
-                    this.$.leftPanel.style.flexGrow = 0.5;
-                    this.$.rightPanel.style.flexGrow = 0.5;
-
-                    this.$.leftPanel.childNodes[1].style.display = '';
-                    this.$.rightPanel.childNodes[1].style.display = '';
-                },
                 properties: {
                     selector: {
                         type: String,
@@ -158,10 +222,6 @@ version: 0.0.0
                     disabled: {
                         type: Boolean,
                         value: true
-                    },
-                    composition: {
-                        type: Object,
-                        observer: '_compositionChanged'
                     },
                     knownSelectors: {
                         type: Array,
@@ -181,48 +241,140 @@ version: 0.0.0
                     observeMutations: {
                         type: Boolean,
                         observer: '_updateObserver',
-                        value: false
+                        // value: false
+                        value: true
                     }
                 },
-
-                observers: [
-                    'compositionHTMLChanged(partial.compositionElement.shadowRoot.innerHTML)'
-                ],
-                // Each method referenced in observers must be defined in
-                // element prototype. The argument to the method is the new value
-                // of the sub-property.
-                compositionHTMLChanged: function(html) {
-                    console.log('partial..innerHTML changed' + html);
-                    this._compositionIsBeingSet = true;
-                    this.content = html || '';
-                    this._compositionIsBeingSet = false;
+                listeners:{
+                    'ace.blur':     'aceBlured',
+                    'ace.change':   'aceChanged',
+                    'ace.focusin':    'aceFocused',
+                    'panner.mousedown': 'pannerMouseDown'
                 },
+                observers: [
+                ],
                 _compositionIsBeingSet: false,
                 _selectorChanged: function(newVal, oldVal) {
                     this.partial = selectElementByString(newVal);
                     if (this.partial) {
+                        // console.log('_selectorChanged to smth', this.partial);
                         this.set('disabled', false);
                         this.$.highlightScopeSelected.show([this.parentElement, this.partial]);
-                        this.composition = this.partial.compositionElement.shadowRoot || document.createDocumentFragment();
+
+                        // if there is no composition yet, populate it and editor with defaults for ''
+                        if(this.partial.compositionElement.composition === null){
+                            console.info('starcounter-layout-html-editor is setting empty compostion, to edit all slots.');
+                            this.partial.compositionElement.composition = document.createDocumentFragment();
+                        }
+                        this._compositionIsBeingSet = true;
+                        this.$.ace.value = this.partial.compositionElement.shadowRoot.innerHTML || '';
+                        this._compositionIsBeingSet = false;
+                        // debugger
+                        this.$.wysiwyg.doc = this.partial.compositionElement.composition;
                     } else {
                         this.set('disabled', true);
                         this.$.highlightScopeSelected.hide();
-                        this.composition = null;
                     }
                     this._updateObserver();
                 },
-                aceChanged: function(event, oldVal) {
-                    // Prevent looping by Polymer's notification protocol
+                isDraggingPanner: false,
+                windowMouseUp: function(e) {
+                    this.isDraggingPanner = false;
+                },
+                pannerMouseDown: function(e) {
+                    this.isDraggingPanner = true;
+                },
+                windowMouseMove: function(e) {
+                    if(!this.isDraggingPanner) return; 
+
+                    /* if the mouseup event happened outside the window */
+                    if(!e.buttons) this.isDraggingPanner = false;
+
+                    let positionFactor = 4 * (0.5 - (e.clientX / this.$['editor-area'].clientWidth)); 
+
+                    positionFactor = Math.min(1, Math.max(-1, positionFactor)); // limit in [-1, 1] => 25% - 75%
+
+                    this.$['coders-pane'].style.flexGrow = 2 - positionFactor;
+                    this.$['tree-view'].style.flexGrow = 2 + positionFactor; 
+                },
+                showHide: function(element, show) {
+                    if(show) {
+                        element.style.flexGrow = element.dataset.oldFlexGrow || 2;
+                        Array.prototype.forEach.call(element.childNodes, function(el)
+                        {               
+                            if(el.classList && !el.classList.contains('pane-collapse')) 
+                                el.style && (el.style.display = '');                            
+                        });
+                        element.removeAttribute('data-collapsed');
+                    }
+                    else {    
+                        // cache old grow
+                        element.dataset.oldFlexGrow = element.style.flexGrow;
+                        element.style.flexBasis = '2em';
+                        element.style.flexGrow = '0';
+                        
+                        Array.prototype.forEach.call(element.childNodes, function(el)
+                        {               
+                            if(el.classList && !el.classList.contains('pane-collapse')) 
+                                el.style && (el.style.display = 'none');                            
+                        });
+                        element.setAttribute('data-collapsed', 'true');
+                    }
+                },
+                collapseButtonClicked: function(e) {
+                    const codersPane = this.$['coders-pane'];
+                    const treeView = this.$['tree-view'];
+                    const collapseTarget = e.target.id === 'btn-left-collapse' ? codersPane : treeView;
+
+                    this.showHide(collapseTarget, collapseTarget.hasAttribute('data-collapsed'));
+                    
+                    const bothAreShown = !(codersPane.hasAttribute('data-collapsed') || treeView.hasAttribute('data-collapsed'));
+                    const bothAreCollapsed = codersPane.hasAttribute('data-collapsed') && treeView.hasAttribute('data-collapsed');
+
+                    /* hide panner when one of the panes is hidden */
+                    this.$.panner.style.display = (bothAreShown) ? 'flex' : 'none';
+
+                    /* if both panes are hidden, we make the editor-view less in height */
+                    this.$['editor-area'].style.flex = bothAreCollapsed ? '0.38 0 0em' : '1 0 8em';
+                },
+                aceFocused: function(){
+                    // console.log('aceFocused');
+                    // set flag, so mutation observer will not
+                    // reset ace editor with it's own change
+                    this.aceBeingChanged = true;
+                },
+                aceBlured: function(){
+                    // console.log('aceBlured');
+                    // reset flag, mutation observer notify ace editor
+                    // about external changes
+                    this.aceBeingChanged = false;
+                },
+                /**
+                 * Called after juicy-ace-editor change
+                 * Parses editors value to document fragment and
+                 * sets composition
+                 * @param  {Event} event  juicy-ace-editor change event
+                 */
+                aceChanged: function(event) {
+                    // Prevent infinite looping,
+                    // for event change being called after changin by ourselves
                     if (this._compositionIsBeingSet) {
                         return;
                     }
-                    // workaround Polymer's buggy dirty checking and
-                    // appendChild(documentFragment)-like behavior of composition setter
-                    var newComposition = this.partial.stringToDocumentFragment(event.target.value);
-                    this.notifyPath('partial.compositionElement.composition', newComposition);
+                    // console.log('aceChanged', event.target.value)
+                    // workaround appendChild(documentFragment)-like behavior
+                    // of composition setter
+                    let newComposition = this.partial.stringToDocumentFragment(event.target.value);
                     this.partial.compositionElement.composition = newComposition;
+                    // please note that we cannot use newComposition any longer,
+                    // as it was empited by appending to SD
+                },
+                wysiwygMadeAChange: function(){
+                    // console.log('wysiwygMadeAChange', arguments);
+                    // this.compositionHTMLChanged(this.partial.compositionElement.composition)
                 },
                 _compositionChanged: function(newVal, oldVal, stopPropagation) {
+                    // console.log('_compositionChanged');
                     return;
                     this._compositionIsBeingSet = true;
                     if (this.partial && this.partial.compositionElement && this.disabled === false) {
@@ -230,7 +382,7 @@ version: 0.0.0
                         this.observer.disconnect();
                         this.partial.compositionElement.composition = newVal;
                         if (!stopPropagation) {
-                            this.$.editor.value = this.partial.compositionElement.composition.innerHTML || '';
+                            this.$.ace.value = this.partial.compositionElement.composition.innerHTML || '';
                         }
 
                         // start observing mutations if needed
@@ -254,17 +406,33 @@ version: 0.0.0
 
                 },
                 /**
-                 * Creates an observer for external changes made to composition, to notify the editor
+                 * Creates an observer for external changes made to composition, to notify the editors
                  */
                 created: function () {
                     const editor = this;
                     // create an observer
                     this.observer = new MutationObserver(function shadowDOMChanged(mutations){
-                        // notify Polymer's data binding
-                        editor.set('content', editor.partial.compositionElement.shadowRoot && editor.partial.compositionElement.shadowRoot.innerHTML || '')
+                        // console.log('mutation');
+                        // Prevent infinite looping
+                        if (editor._compositionIsBeingSet) {
+                            // console.log('disregared mutation');
+                            return;
+                        }
+                        editor._compositionIsBeingSet = true;
+                        // notify juicy-ace-editor, unless it's the one making it
+                        if(!editor.aceBeingChanged){
+                            editor.$.ace.value = editor.partial.compositionElement.shadowRoot && editor.partial.compositionElement.shadowRoot.innerHTML || '';
+                        }
+                        // notify wysiwyg-editor's document, even about its own change
+                        editor.$.wysiwyg.docMutated(mutations);
+                        editor._compositionIsBeingSet = false;
                     });
                 },
-
+                detached: function()
+                {
+                    window.removeEventListener('mousemove', this.windowMouseMove);
+                    window.removeEventListener('mouseup', this.windowMouseUp);
+                },
                 // Fires when the local DOM has been fully prepared
                 ready: function() {
                     this.addEventListener('mouseup', function(ev) {
@@ -272,8 +440,8 @@ version: 0.0.0
                     });
                     this.refreshSelectors();
 
-                    window.addEventListener('mouseup', this.windowMouseUp.bind(this));
                     window.addEventListener('mousemove', this.windowMouseMove.bind(this));
+                    window.addEventListener('mouseup', this.windowMouseUp.bind(this));
                 },
                 /**
                  * Refreshes the list of currently available partials to populate dropdown
@@ -297,16 +465,6 @@ version: 0.0.0
                     return this;
                 },
 
-                // Fires when the element was inserted into the document
-                attached: function() {},
-
-                // Fires when the element was removed from the document
-                detached: function() {},
-
-                // Fires when an attribute was added, removed, or updated
-                attributeChanged: function(name, type) {},
-
-
                 /**
                  * Saves given or current layout as stored one, (TODO:) notifies binding about it.
                  * @param  {String} [layoutStr] layout to be saved, if not given current one will be used
@@ -322,14 +480,16 @@ version: 0.0.0
                     // TODO: move editing features from partial to here
                     this.partial._forceLayoutChange = true;
                     this.partial._compositionChanged("");
-                    return this.set('content', this.partial.compositionElement.shadowRoot && this.partial.compositionElement.shadowRoot.innerHTML || '');
+                    return this.partial.compositionElement.shadowRoot;
+                    // return this.set('content', this.partial.compositionElement.shadowRoot && this.partial.compositionElement.shadowRoot.innerHTML || '');
 
                 },
                 revert: function() {
                     if (!this.partial) {
                         return false;
                     }
-                    return this.set('content', this.partial.storedLayout);
+                    return this.partial.compositionElement.composition = this.partial.storedLayout || this.partial.defaultComposition
+                    // return this.set('content', this.partial.storedLayout);
 
                 }
             });
